@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
@@ -43,7 +44,9 @@ func echoServer(ctx context.Context) error {
 
 	e.Use(authecho.MiddlewareJWT(
 		authecho.WithKeyFunc(jwks.Keyfunc),
-		authecho.WithClaims(&claims.Custom{}),
+		authecho.WithClaims(func() jwt.Claims {
+			return &claims.Custom{}
+		}),
 		authecho.WithSkipper(authecho.NewSkipper()),
 	))
 

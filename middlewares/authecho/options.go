@@ -7,8 +7,8 @@ import (
 )
 
 type options struct {
-	config echojwt.Config
-	claims jwt.Claims
+	config    echojwt.Config
+	newClaims func() jwt.Claims
 }
 
 type Option func(*options)
@@ -19,10 +19,11 @@ func WithConfig(cfg echojwt.Config) Option {
 	}
 }
 
-// WithClaims sets the claims to use, claims must be a pointer.
-func WithClaims(claims jwt.Claims) Option {
+// WithClaims sets the claims to use, function must return a pointer.
+func WithClaims(newClaims func() jwt.Claims) Option {
 	return func(opts *options) {
-		opts.claims = claims
+		// check claims is pointer
+		opts.newClaims = newClaims
 	}
 }
 

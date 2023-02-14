@@ -7,10 +7,11 @@ replace github.com/worldline-go/auth => ../../
 replace github.com/worldline-go/auth/middlewares/authecho => ../../middlewares/authecho
 
 require (
+	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/labstack/echo/v4 v4.10.0
 	github.com/rs/zerolog v1.29.0
 	github.com/worldline-go/auth v0.1.0
-	github.com/worldline-go/auth/middlewares/authecho v0.1.0
+	github.com/worldline-go/auth/middlewares/authecho v0.1.1
 	github.com/worldline-go/logz v0.3.1
 	github.com/worldline-go/logz/logecho v0.1.0
 	github.com/ziflex/lecho/v3 v3.3.0
@@ -19,7 +20,6 @@ require (
 require (
 	github.com/MicahParks/keyfunc v1.7.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.3 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/labstack/echo-jwt/v4 v4.1.0 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect

@@ -3,7 +3,6 @@ package authecho
 import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/worldline-go/auth/claims"
 
 	echojwt "github.com/labstack/echo-jwt/v4"
 )
@@ -17,9 +16,12 @@ func MiddlewareJWT(opts ...Option) echo.MiddlewareFunc {
 
 	if options.config.NewClaimsFunc == nil {
 		options.config.NewClaimsFunc = func(c echo.Context) jwt.Claims {
-			value := options.claims
-			if value == nil {
-				value = &claims.Custom{}
+			var value jwt.Claims
+
+			if options.newClaims == nil {
+				value = &jwt.MapClaims{}
+			} else {
+				value = options.newClaims()
 			}
 
 			c.Set("claims", value)

@@ -15,7 +15,7 @@ var providerServer = auth.Provider{
 var providerClient = auth.Provider{
 	Keycloak: &providers.KeyCloak{
 		ClientID:     "test",
-		ClientSecret: "0GfUHtYbo4Yi8VayrVwzRNfwtUWFIZFh",
+		ClientSecret: "bXXwbjKO8x2y8OjNNAkXTbp0Oq3tDCho",
 		BaseURL:      "http://localhost:8080",
 		Realm:        "finops",
 		Scopes:       []string{"openid", "profile", "email", "offline_access"},

@@ -15,6 +15,7 @@ func (p *Provider) GetJwks(ctx context.Context, opts ...OptionJWK) (*keyfunc.JWK
 		refreshErrorHandler: func(err error) {
 			log.Warn().Err(err).Msg("failed to refresh jwt.Keyfunc")
 		},
+		refreshInterval: time.Minute * 5,
 	}
 
 	for _, opt := range opts {
@@ -35,8 +36,8 @@ func (p *Provider) GetJwks(ctx context.Context, opts ...OptionJWK) (*keyfunc.JWK
 		Ctx:                 ctx,
 		RefreshErrorHandler: options.refreshErrorHandler,
 		// RefreshRateLimit:    time.Minute * 5,
-		RefreshInterval:   time.Minute * 5,
-		RefreshUnknownKID: false,
+		RefreshInterval:   options.refreshInterval,
+		RefreshUnknownKID: options.refreshUnknownKID,
 	}
 
 	jwks, err := keyfunc.Get(certURL, keyOpts)

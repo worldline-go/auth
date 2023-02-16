@@ -1,5 +1,7 @@
 package auth
 
+import "time"
+
 type optionsParser struct {
 	jwt bool
 }
@@ -14,6 +16,8 @@ func WithJwt() OptionParser {
 
 type optionsJWK struct {
 	refreshErrorHandler func(err error)
+	refreshInterval     time.Duration
+	refreshUnknownKID   bool
 }
 
 type OptionJWK func(options *optionsJWK)
@@ -21,5 +25,18 @@ type OptionJWK func(options *optionsJWK)
 func WithRefreshErrorHandler(fn func(err error)) OptionJWK {
 	return func(options *optionsJWK) {
 		options.refreshErrorHandler = fn
+	}
+}
+
+// WithRefreshInterval sets the refresh interval for the jwt.Keyfunc default is 5 minutes.
+func WithRefreshInterval(d time.Duration) OptionJWK {
+	return func(options *optionsJWK) {
+		options.refreshInterval = d
+	}
+}
+
+func WithRefreshUnknownKID(v bool) OptionJWK {
+	return func(options *optionsJWK) {
+		options.refreshUnknownKID = v
 	}
 }

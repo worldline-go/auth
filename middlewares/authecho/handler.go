@@ -3,11 +3,13 @@ package authecho
 import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/worldline-go/auth/claims"
 
 	echojwt "github.com/labstack/echo-jwt/v4"
 )
 
 // MiddlewareJWT returns a JWT middleware.
+// Default claims is *claims.Custom.
 func MiddlewareJWT(opts ...Option) echo.MiddlewareFunc {
 	var options options
 	for _, opt := range opts {
@@ -19,7 +21,7 @@ func MiddlewareJWT(opts ...Option) echo.MiddlewareFunc {
 			var value jwt.Claims
 
 			if options.newClaims == nil {
-				value = &jwt.MapClaims{}
+				value = &claims.Custom{}
 			} else {
 				value = options.newClaims()
 			}

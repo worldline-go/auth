@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
@@ -44,9 +43,6 @@ func echoServer(ctx context.Context) error {
 
 	e.Use(authecho.MiddlewareJWT(
 		authecho.WithKeyFunc(jwks.Keyfunc),
-		authecho.WithClaims(func() jwt.Claims {
-			return &claims.Custom{}
-		}),
 		authecho.WithSkipper(authecho.NewSkipper()),
 	))
 
@@ -56,10 +52,11 @@ func echoServer(ctx context.Context) error {
 
 	e.GET("/", func(c echo.Context) error {
 		claims := c.Get("claims").(*claims.Custom)
-		log.Info().Msgf("has transaciton role: %v", claims.HasRole("transaction"))
+		log.Info().Msgf("has transaction role: %v", claims.HasRole("transaction"))
+		log.Info().Msgf("has email scope: %v", claims.HasScope("email"))
 
 		return c.String(http.StatusOK, "Hello, World!")
-	})
+	}, authecho.MiddlewareRole("transaction"), authecho.MiddlewareScope("email"))
 
 	shutdown = func() {
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)

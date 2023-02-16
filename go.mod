@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/MicahParks/keyfunc v1.7.0
+	github.com/go-test/deep v1.1.0
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/rs/zerolog v1.28.0
 	golang.org/x/oauth2 v0.3.0

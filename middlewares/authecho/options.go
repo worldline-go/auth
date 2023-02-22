@@ -9,6 +9,7 @@ import (
 type options struct {
 	config    echojwt.Config
 	newClaims func() jwt.Claims
+	redirect  *RedirectSetting
 }
 
 type Option func(*options)
@@ -37,4 +38,14 @@ func WithSkipper(skipper middleware.Skipper) Option {
 	return func(opts *options) {
 		opts.config.Skipper = skipper
 	}
+}
+
+func WithRedirect(redirect *RedirectSetting) Option {
+	return func(opts *options) {
+		opts.redirect = redirect
+	}
+}
+
+func WithNoop() Option {
+	return func(opts *options) {}
 }

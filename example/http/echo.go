@@ -55,6 +55,8 @@ func echoServer(ctx context.Context) error {
 		log.Info().Msgf("has transaction role: %v", claims.HasRole("transaction"))
 		log.Info().Msgf("has email scope: %v", claims.HasScope("email"))
 
+		log.Info().Msgf("scopes: %v", claims.Scope)
+
 		return c.String(http.StatusOK, "Hello, World!")
 	}, authecho.MiddlewareRole("transaction"), authecho.MiddlewareScope("email"))
 

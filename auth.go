@@ -11,6 +11,11 @@ type Configurer interface {
 	Config() (*clientcredentials.Config, error)
 	// CertURL returns the certificate URL and the public key-id.
 	CertURL() (string, error)
+
+	GetTokenURL() (string, error)
+	GetAuthURL() (string, error)
+	GetClientID() string
+	GetClientSecret() string
 }
 
 type Provider struct {

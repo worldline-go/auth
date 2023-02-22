@@ -11,7 +11,7 @@ import (
 //
 // Default suffixes are: [/ping, /health, /metrics].
 func NewSkipper(suffixes ...string) middleware.Skipper {
-	if suffixes == nil {
+	if len(suffixes) == 0 {
 		// Skip ping, health and metrics endpoints for less noise.
 		suffixes = []string{"/ping", "/health", "/metrics"}
 	}

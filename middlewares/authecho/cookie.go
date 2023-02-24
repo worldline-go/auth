@@ -3,6 +3,7 @@ package authecho
 import (
 	"encoding/base64"
 	"encoding/json"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
@@ -18,7 +19,7 @@ type Cookie struct {
 	Scope            string `json:"scope"`
 }
 
-func NewCookie(v string, b64 bool) (Cookie, error) {
+func ParseCookie(v string, b64 bool) (*Cookie, error) {
 	cookieRecord := Cookie{}
 	vByte := []byte(v)
 
@@ -26,20 +27,42 @@ func NewCookie(v string, b64 bool) (Cookie, error) {
 		var err error
 		vByte, err = base64.StdEncoding.DecodeString(v)
 		if err != nil {
-			return cookieRecord, err
+			return nil, err
 		}
 	}
 
 	// parse cookie
 	if err := json.Unmarshal(vByte, &cookieRecord); err != nil {
-		return cookieRecord, err
+		return nil, err
 	}
 
-	return cookieRecord, nil
+	return &cookieRecord, nil
 }
 
 func AddAuthorizationHeader(c echo.Context, token string) error {
 	c.Request().Header.Add("Authorization", "Bearer "+token)
 
 	return nil
+}
+
+func RecordCookie(c echo.Context, body []byte, cookieName string, redirect *RedirectSetting) {
+	cookieValue := base64.StdEncoding.EncodeToString(body)
+	// set the cookie
+	c.SetCookie(&http.Cookie{
+		Name:   cookieName,
+		Value:  cookieValue,
+		Path:   redirect.Path,
+		MaxAge: redirect.MaxAge,
+		Secure: redirect.Secure,
+	})
+}
+
+func RemoveCookie(c echo.Context, cookieName string, redirect *RedirectSetting) {
+	c.SetCookie(&http.Cookie{
+		Name:   cookieName,
+		Value:  "",
+		Path:   redirect.Path,
+		MaxAge: -1,
+		Secure: redirect.Secure,
+	})
 }

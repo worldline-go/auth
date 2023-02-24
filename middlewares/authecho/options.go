@@ -45,7 +45,3 @@ func WithRedirect(redirect *RedirectSetting) Option {
 		opts.redirect = redirect
 	}
 }
-
-func WithNoop() Option {
-	return func(opts *options) {}
-}

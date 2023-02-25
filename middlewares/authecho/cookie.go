@@ -45,7 +45,7 @@ func AddAuthorizationHeader(c echo.Context, token string) error {
 	return nil
 }
 
-func RecordCookie(c echo.Context, body []byte, cookieName string, redirect *RedirectSetting) {
+func RecordCookie(c echo.Context, body []byte, cookieName string, redirect *RedirectSetting) string {
 	cookieValue := base64.StdEncoding.EncodeToString(body)
 	// set the cookie
 	c.SetCookie(&http.Cookie{
@@ -55,6 +55,8 @@ func RecordCookie(c echo.Context, body []byte, cookieName string, redirect *Redi
 		MaxAge: redirect.MaxAge,
 		Secure: redirect.Secure,
 	})
+
+	return cookieValue
 }
 
 func RemoveCookie(c echo.Context, cookieName string, redirect *RedirectSetting) {

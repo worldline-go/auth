@@ -71,21 +71,42 @@ func RemoveAuthQueryParams(r *http.Request) {
 	r.URL.RawQuery = q.Encode()
 }
 
-func RedirectURI(r *http.Request, callback, baseURL string) string {
-	redirectURI := ""
+func RedirectURI(r *http.Request, callback, baseURL, schema string) (string, error) {
+	if baseURL == "" {
+		// check headers of X-Forwarded-Proto and X-Forwarded-Host
+		// if they are set, use them to build the redirect uri
 
-	if callback == "" {
+		proto := r.Header.Get("X-Forwarded-Proto")
+		host := r.Header.Get("X-Forwarded-Host")
+
+		if proto != "" && host != "" {
+			r.URL.Scheme = proto
+			r.URL.Host = host
+		} else {
+			// check the host header
+			host := r.Host
+			if host != "" {
+				r.URL.Host = host
+				if schema != "" {
+					r.URL.Scheme = schema
+				} else {
+					r.URL.Scheme = "https"
+				}
+			}
+		}
+	} else {
 		urlParsed, err := url.Parse(baseURL)
 		if err != nil {
-			return ""
+			return "", err
 		}
 
 		r.URL.Scheme = urlParsed.Scheme
 		r.URL.Host = urlParsed.Host
-		redirectURI = r.URL.String()
-	} else {
-		redirectURI, _ = url.JoinPath(baseURL, callback)
 	}
 
-	return redirectURI
+	if callback != "" {
+		r.URL.Path = callback
+	}
+
+	return r.URL.String(), nil
 }

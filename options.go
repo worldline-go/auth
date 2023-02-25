@@ -1,6 +1,9 @@
 package auth
 
-import "time"
+import (
+	"net/http"
+	"time"
+)
 
 type optionsParser struct {
 	jwt bool
@@ -18,6 +21,7 @@ type optionsJWK struct {
 	refreshErrorHandler func(err error)
 	refreshInterval     time.Duration
 	refreshUnknownKID   bool
+	client              *http.Client
 }
 
 type OptionJWK func(options *optionsJWK)
@@ -38,5 +42,11 @@ func WithRefreshInterval(d time.Duration) OptionJWK {
 func WithRefreshUnknownKID(v bool) OptionJWK {
 	return func(options *optionsJWK) {
 		options.refreshUnknownKID = v
+	}
+}
+
+func WithClient(client *http.Client) OptionJWK {
+	return func(options *optionsJWK) {
+		options.client = client
 	}
 }

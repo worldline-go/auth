@@ -29,7 +29,7 @@ func IsRefreshNeed(accessToken string) (bool, error) {
 }
 
 // RefreshToken refreshes the access token and set the cookie.
-func RefreshToken(c echo.Context, token, cookieName string, redirect *RedirectSetting) (*Cookie, error) {
+func RefreshToken(c echo.Context, token, cookieName string, oldCookieValue string, redirect *RedirectSetting) (*Cookie, error) {
 	data := url.Values{}
 	data.Add("grant_type", "refresh_token")
 	data.Add("client_id", redirect.ClientID)
@@ -66,13 +66,24 @@ func RefreshToken(c echo.Context, token, cookieName string, redirect *RedirectSe
 	}
 
 	// set the cookie
-	RecordCookie(c, body, cookieName, redirect)
+	cookieValue := RecordCookie(c, body, cookieName, redirect)
+
+	// switch the cookie value in request header
+	cookieHeaderValue := c.Request().Header.Get("Cookie")
+	if cookieHeaderValue != "" {
+		cookieHeaderValue = strings.Replace(cookieHeaderValue, oldCookieValue, cookieValue, 1)
+		c.Request().Header.Set("Cookie", cookieHeaderValue)
+	}
 
 	return cookieParsed, nil
 }
 
 func CodeToken(c echo.Context, code, cookieName string, redirect *RedirectSetting) error {
-	redirectURI := RedirectURI(c.Request(), redirect.Callback, redirect.BaseURL)
+	redirectURI, err := RedirectURI(c.Request().Clone(c.Request().Context()), redirect.Callback, redirect.BaseURL, redirect.Schema)
+	if err != nil {
+		c.Set("auth_error", err.Error())
+		return err
+	}
 
 	data := url.Values{}
 	data.Add("grant_type", "authorization_code")

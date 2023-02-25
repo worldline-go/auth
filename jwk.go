@@ -38,6 +38,7 @@ func (p *Provider) GetJwks(ctx context.Context, opts ...OptionJWK) (*keyfunc.JWK
 		// RefreshRateLimit:    time.Minute * 5,
 		RefreshInterval:   options.refreshInterval,
 		RefreshUnknownKID: options.refreshUnknownKID,
+		Client:            options.client,
 	}
 
 	jwks, err := keyfunc.Get(certURL, keyOpts)

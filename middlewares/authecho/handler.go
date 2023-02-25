@@ -20,6 +20,7 @@ type RedirectSetting struct {
 	ClientID     string `cfg:"-"`
 	ClientSecret string `cfg:"-"`
 
+	// CookieName is the name of the cookie. Default is "auth_" + ClientID.
 	CookieName string `cfg:"cookie_name"`
 	// Callback is the callback URI.
 	Callback string `cfg:"callback"`
@@ -28,13 +29,16 @@ type RedirectSetting struct {
 	// Path for the cookie.
 	Path string `cfg:"path"`
 	// BaseURL is the base URL to use for the redirect.
+	// Default is the request Host with checking the X-Forwarded-Host header.
 	BaseURL string `cfg:"base_url"`
+	// Schema is the default schema to use for the redirect if no schema is provided.
+	// Default is the https schema.
+	Schema string `cfg:"schema"`
 	// Secure is the secure flag for the cookie.
 	Secure bool `cfg:"secure"`
 
 	// TokenHeader to add token to header.
 	TokenHeader bool `cfg:"token_header"`
-
 	// RefreshToken is use to refresh the token.
 	RefreshToken bool `cfg:"refresh_token"`
 
@@ -155,7 +159,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 
 						// refresh token
 						if ok {
-							if cookieParsedNew, err := RefreshToken(c, cookieParsed.RefreshToken, cookieName, options.redirect); err != nil {
+							if cookieParsedNew, err := RefreshToken(c, cookieParsed.RefreshToken, cookieName, cookie.Value, options.redirect); err != nil {
 								c.Logger().Debugf("failed RefreshToken: %v", err)
 							} else {
 								cookieParsed = cookieParsedNew
@@ -226,7 +230,10 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 			SaveRedirectQueryParams(c, cookieName, options.redirect)
 			RemoveAuthQueryParams(c.Request())
 
-			redirectURI := RedirectURI(c.Request(), options.redirect.Callback, options.redirect.BaseURL)
+			redirectURI, errR := RedirectURI(c.Request().Clone(c.Request().Context()), options.redirect.Callback, options.redirect.BaseURL, options.redirect.Schema)
+			if errR != nil {
+				return echo.NewHTTPError(http.StatusFailedDependency, errR.Error())
+			}
 
 			// redirect to login page
 			data := url.Values{}

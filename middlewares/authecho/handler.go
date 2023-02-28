@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/worldline-go/auth/claims"
@@ -28,6 +30,8 @@ type RedirectSetting struct {
 	MaxAge int `cfg:"max_age"`
 	// Path for the cookie.
 	Path string `cfg:"path"`
+	// Domain for the cookie.
+	Domain string `cfg:"domain"`
 	// BaseURL is the base URL to use for the redirect.
 	// Default is the request Host with checking the X-Forwarded-Host header.
 	BaseURL string `cfg:"base_url"`
@@ -36,6 +40,11 @@ type RedirectSetting struct {
 	Schema string `cfg:"schema"`
 	// Secure is the secure flag for the cookie.
 	Secure bool `cfg:"secure"`
+
+	// UseSession is use session instead of cookie.
+	UseSession bool `cfg:"use_session"`
+	// SessionKey secret key for session.
+	SessionKey string `cfg:"session_key"`
 
 	// TokenHeader to add token to header.
 	TokenHeader bool `cfg:"token_header"`
@@ -109,6 +118,23 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 			cookieName = "auth_" + options.redirect.ClientID
 		}
 
+		var sessionKey []byte
+		if options.redirect.SessionKey == "" {
+			sessionKey = []byte(options.redirect.SessionKey)
+		} else {
+			sessionKey = securecookie.GenerateRandomKey(32)
+		}
+
+		sessionStore := sessions.NewFilesystemStore("", sessionKey)
+		// maxlength
+		sessionStore.MaxLength(1 << 20)
+		sessionStore.Options = &sessions.Options{
+			Path:   options.redirect.Path,
+			Domain: options.redirect.Domain,
+			MaxAge: options.redirect.MaxAge,
+			Secure: options.redirect.Secure,
+		}
+
 		// use as default token extractor
 		options.config.TokenLookupFuncs = []middleware.ValuesExtractor{
 			func(c echo.Context) ([]string, error) {
@@ -135,9 +161,22 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 					return next(c)
 				}
 
-				if cookie, err := c.Cookie(cookieName); err == nil && cookie.Value != "" {
+				v64 := ""
+				if options.redirect.UseSession {
+					if v, err := sessionStore.Get(c.Request(), cookieName); !v.IsNew && err == nil {
+						// add the access token to the request
+						v64 = v.Values["cookie"].(string)
+					}
+				} else {
+					if cookie, err := c.Cookie(cookieName); err == nil && cookie.Value != "" {
+						// add the access token to the request
+						v64 = cookie.Value
+					}
+				}
+
+				if v64 != "" {
 					// add the access token to the request
-					cookieParsed, err := ParseCookie(cookie.Value, true)
+					cookieParsed, err := ParseCookie(v64, true)
 					if err != nil {
 						c.Logger().Debugf("failed ParseCookie: %v", err)
 						return next(c)
@@ -152,7 +191,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 
 						// refresh token
 						if ok {
-							if cookieParsedNew, err := RefreshToken(c, cookieParsed.RefreshToken, cookieName, cookie.Value, options.redirect); err != nil {
+							if cookieParsedNew, err := RefreshToken(c, cookieParsed.RefreshToken, cookieName, v64, options.redirect, sessionStore); err != nil {
 								c.Logger().Debugf("failed RefreshToken: %v", err)
 							} else {
 								cookieParsed = cookieParsedNew
@@ -185,14 +224,14 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 
 				// remove code from query params
 				RemoveAuthQueryParams(c.Request())
-				if err := CodeToken(c, code, cookieName, options.redirect); err != nil {
+				if err := CodeToken(c, code, cookieName, options.redirect, sessionStore); err != nil {
 					c.Logger().Debugf("failed CodeToken: %v", err)
 
 					return next(c)
 				}
 
 				// set back the query params
-				SetRedirectQueryParams(c, cookieName, options.redirect)
+				SetRedirectQueryParams(c, cookieName, options.redirect, sessionStore)
 
 				// redirect to the callback but respose already committed
 				return c.Redirect(http.StatusTemporaryRedirect, c.Request().URL.String())
@@ -208,7 +247,11 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 				return errX
 			}
 
-			RemoveCookie(c, cookieName, options.redirect)
+			if options.redirect.UseSession {
+				RemoveSession(c, cookieName, sessionStore)
+			} else {
+				RemoveCookie(c, cookieName, options.redirect)
+			}
 
 			if options.redirect.CheckValue != "" {
 				if c.Get(options.redirect.CheckValue) == nil {
@@ -220,7 +263,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, errS.(string))
 			}
 
-			SaveRedirectQueryParams(c, cookieName, options.redirect)
+			SaveRedirectQueryParams(c, cookieName, options.redirect, sessionStore)
 			RemoveAuthQueryParams(c.Request())
 
 			redirectURI, errR := RedirectURI(c.Request().Clone(c.Request().Context()), options.redirect.Callback, options.redirect.BaseURL, options.redirect.Schema)

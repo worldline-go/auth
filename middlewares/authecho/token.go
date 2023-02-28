@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
 
@@ -29,7 +30,7 @@ func IsRefreshNeed(accessToken string) (bool, error) {
 }
 
 // RefreshToken refreshes the access token and set the cookie.
-func RefreshToken(c echo.Context, token, cookieName string, oldCookieValue string, redirect *RedirectSetting) (*Cookie, error) {
+func RefreshToken(c echo.Context, token, cookieName string, oldCookieValue string, redirect *RedirectSetting, sessionStore *sessions.FilesystemStore) (*Cookie, error) {
 	data := url.Values{}
 	data.Add("grant_type", "refresh_token")
 	data.Add("client_id", redirect.ClientID)
@@ -41,8 +42,10 @@ func RefreshToken(c echo.Context, token, cookieName string, oldCookieValue strin
 		return nil, err
 	}
 
-	clientPass := base64.StdEncoding.EncodeToString([]byte(redirect.ClientID + ":" + redirect.ClientSecret))
-	req.Header.Add("Authorization", "Basic "+clientPass)
+	if redirect.ClientSecret != "" {
+		clientPass := base64.StdEncoding.EncodeToString([]byte(redirect.ClientID + ":" + redirect.ClientSecret))
+		req.Header.Add("Authorization", "Basic "+clientPass)
+	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("accept", "application/json")
@@ -65,6 +68,12 @@ func RefreshToken(c echo.Context, token, cookieName string, oldCookieValue strin
 		return nil, err
 	}
 
+	if redirect.UseSession {
+		RecordSession(c, body, cookieName, sessionStore)
+
+		return cookieParsed, nil
+	}
+
 	// set the cookie
 	cookieValue := RecordCookie(c, body, cookieName, redirect)
 
@@ -78,7 +87,7 @@ func RefreshToken(c echo.Context, token, cookieName string, oldCookieValue strin
 	return cookieParsed, nil
 }
 
-func CodeToken(c echo.Context, code, cookieName string, redirect *RedirectSetting) error {
+func CodeToken(c echo.Context, code, cookieName string, redirect *RedirectSetting, sessionStore *sessions.FilesystemStore) error {
 	redirectURI, err := RedirectURI(c.Request().Clone(c.Request().Context()), redirect.Callback, redirect.BaseURL, redirect.Schema)
 	if err != nil {
 		c.Set("auth_error", err.Error())
@@ -98,10 +107,12 @@ func CodeToken(c echo.Context, code, cookieName string, redirect *RedirectSettin
 		return err
 	}
 
-	clientPass := base64.StdEncoding.EncodeToString([]byte(redirect.ClientID + ":" + redirect.ClientSecret))
+	if redirect.ClientSecret != "" {
+		clientPass := base64.StdEncoding.EncodeToString([]byte(redirect.ClientID + ":" + redirect.ClientSecret))
+		req.Header.Add("Authorization", "Basic "+clientPass)
+	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Authorization", "Basic "+clientPass)
 	req.Header.Set("accept", "application/json")
 
 	response, err := http.DefaultClient.Do(req)
@@ -116,6 +127,12 @@ func CodeToken(c echo.Context, code, cookieName string, redirect *RedirectSettin
 	if !(response.StatusCode >= 200 && response.StatusCode < 300) {
 		c.Set("auth_error", string(body))
 		return fmt.Errorf(string(body))
+	}
+
+	if redirect.UseSession {
+		RecordSession(c, body, cookieName, sessionStore)
+
+		return nil
 	}
 
 	// set the cookie

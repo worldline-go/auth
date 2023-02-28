@@ -4,10 +4,11 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
 
-func SaveRedirectQueryParams(c echo.Context, cookieName string, redirect *RedirectSetting) {
+func SaveRedirectQueryParams(c echo.Context, cookieName string, redirect *RedirectSetting, sessionStore *sessions.FilesystemStore) {
 	values := url.Values{}
 
 	q := c.Request().URL.Query()
@@ -20,23 +21,38 @@ func SaveRedirectQueryParams(c echo.Context, cookieName string, redirect *Redire
 	if q.Has("session_state") {
 		values.Add("session_state", q.Get("session_state"))
 	}
-	// remove the cookie
-	c.SetCookie(&http.Cookie{
-		Name:   cookieName + "_code",
-		Value:  values.Encode(),
-		Path:   c.Request().URL.Path,
-		MaxAge: redirect.MaxAge,
-		Secure: redirect.Secure,
-	})
-}
 
-func SetRedirectQueryParams(c echo.Context, cookieName string, redirect *RedirectSetting) {
-	cookie, err := c.Cookie(cookieName + "_code")
-	if err != nil {
+	if redirect.UseSession {
+		RecordSessionCode(c, values.Encode(), cookieName+"_code", sessionStore)
+
 		return
 	}
 
-	values, err := url.ParseQuery(cookie.Value)
+	RecordCookieCode(c, values.Encode(), cookieName+"_code", redirect)
+}
+
+func SetRedirectQueryParams(c echo.Context, cookieName string, redirect *RedirectSetting, sessionStore *sessions.FilesystemStore) {
+	value := ""
+	if redirect.UseSession {
+		session, _ := sessionStore.Get(c.Request(), cookieName+"_code")
+		if session.IsNew {
+			return
+		}
+
+		var ok bool
+		value, ok = session.Values["query"].(string)
+		if !ok {
+			return
+		}
+	} else {
+		cookie, err := c.Cookie(cookieName + "_code")
+		if err != nil {
+			return
+		}
+		value = cookie.Value
+	}
+
+	values, err := url.ParseQuery(value)
 	if err != nil {
 		return
 	}
@@ -53,14 +69,13 @@ func SetRedirectQueryParams(c echo.Context, cookieName string, redirect *Redirec
 	}
 	c.Request().URL.RawQuery = q.Encode()
 
-	// remove the cookie
-	c.SetCookie(&http.Cookie{
-		Name:   cookieName + "_code",
-		Value:  "",
-		Path:   c.Request().URL.Path,
-		MaxAge: -1,
-		Secure: redirect.Secure,
-	})
+	if redirect.UseSession {
+		RemoveSession(c, cookieName+"_code", sessionStore)
+
+		return
+	}
+
+	RemoveCookie(c, cookieName+"_code", redirect)
 }
 
 func RemoveAuthQueryParams(r *http.Request) {

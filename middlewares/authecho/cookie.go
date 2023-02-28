@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
 
@@ -51,6 +52,7 @@ func RecordCookie(c echo.Context, body []byte, cookieName string, redirect *Redi
 	c.SetCookie(&http.Cookie{
 		Name:   cookieName,
 		Value:  cookieValue,
+		Domain: redirect.Domain,
 		Path:   redirect.Path,
 		MaxAge: redirect.MaxAge,
 		Secure: redirect.Secure,
@@ -59,12 +61,55 @@ func RecordCookie(c echo.Context, body []byte, cookieName string, redirect *Redi
 	return cookieValue
 }
 
+func RecordCookieCode(c echo.Context, value string, cookieName string, redirect *RedirectSetting) {
+	// set the cookie
+	c.SetCookie(&http.Cookie{
+		Name:   cookieName,
+		Value:  value,
+		Domain: redirect.Domain,
+		Path:   redirect.Path,
+		MaxAge: redirect.MaxAge,
+		Secure: redirect.Secure,
+	})
+}
+
 func RemoveCookie(c echo.Context, cookieName string, redirect *RedirectSetting) {
 	c.SetCookie(&http.Cookie{
 		Name:   cookieName,
 		Value:  "",
+		Domain: redirect.Domain,
 		Path:   redirect.Path,
 		MaxAge: -1,
 		Secure: redirect.Secure,
 	})
+}
+
+func RecordSession(c echo.Context, body []byte, cookieName string, sessionStore *sessions.FilesystemStore) string {
+	cookieValue := base64.StdEncoding.EncodeToString(body)
+	// set the cookie
+	session, _ := sessionStore.Get(c.Request(), cookieName)
+	session.Values["cookie"] = cookieValue
+
+	if err := session.Save(c.Request(), c.Response()); err != nil {
+		c.Logger().Debug("save session", err)
+	}
+
+	return cookieValue
+}
+
+func RecordSessionCode(c echo.Context, value, cookieName string, sessionStore *sessions.FilesystemStore) {
+	// set the cookie
+	session, _ := sessionStore.Get(c.Request(), cookieName)
+	session.Values["code"] = value
+
+	if err := session.Save(c.Request(), c.Response()); err != nil {
+		c.Logger().Debug("save session", err)
+	}
+}
+
+func RemoveSession(c echo.Context, cookieName string, sessionStore *sessions.FilesystemStore) {
+	session, _ := sessionStore.Get(c.Request(), cookieName)
+	session.Options.MaxAge = -1
+
+	_ = session.Save(c.Request(), c.Response())
 }

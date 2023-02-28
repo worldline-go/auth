@@ -9,8 +9,8 @@ replace github.com/worldline-go/auth/middlewares/authecho => ../../middlewares/a
 require (
 	github.com/labstack/echo/v4 v4.10.0
 	github.com/rs/zerolog v1.29.0
-	github.com/worldline-go/auth v0.2.0
-	github.com/worldline-go/auth/middlewares/authecho v0.2.0
+	github.com/worldline-go/auth v0.3.0
+	github.com/worldline-go/auth/middlewares/authecho v0.3.2
 	github.com/worldline-go/logz v0.3.1
 	github.com/worldline-go/logz/logecho v0.1.0
 	github.com/ziflex/lecho/v3 v3.3.0

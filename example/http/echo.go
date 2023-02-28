@@ -58,7 +58,7 @@ func echoServer(ctx context.Context) error {
 		log.Info().Msgf("scopes: %v", claims.Scope)
 
 		return c.String(http.StatusOK, "Hello, World!")
-	}, authecho.MiddlewareRole("transaction"), authecho.MiddlewareScope("email"))
+	}, authecho.MiddlewareRole(authecho.WithMethodsRole("transaction")), authecho.MiddlewareScope(authecho.WithScopes("email")))
 
 	shutdown = func() {
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)

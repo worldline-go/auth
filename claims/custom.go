@@ -18,8 +18,17 @@ type Custom struct {
 	// custom maps for fast lookup
 	ScopeSet map[string]struct{} `json:"-"`
 	RoleSet  map[string]struct{} `json:"-"`
+	ScopeStr string              `json:"-"`
+	RoleStr  string              `json:"-"`
+
+	// load claims from jwt.MapClaims for debugging
+	MapClaims jwt.MapClaims `json:"-"`
 
 	jwt.RegisteredClaims
+}
+
+type Roles struct {
+	Roles []string `json:"roles,omitempty"`
 }
 
 func (c *Custom) UnmarshalJSON(b []byte) error {
@@ -28,17 +37,27 @@ func (c *Custom) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	if err := json.Unmarshal(b, &c.MapClaims); err != nil {
+		return err
+	}
+
 	if c.Scope != "" {
 		c.ScopeSet = make(map[string]struct{})
 		for _, s := range strings.Split(c.Scope, " ") {
 			c.ScopeSet[s] = struct{}{}
 		}
+
+		c.ScopeStr = c.Scope
 	}
+
+	var roleBuilder strings.Builder
 
 	if c.RealmAccess.Roles != nil {
 		c.RoleSet = make(map[string]struct{})
 		for _, r := range c.RealmAccess.Roles {
 			c.RoleSet[r] = struct{}{}
+			roleBuilder.WriteString(r)
+			roleBuilder.WriteString(" ")
 		}
 	}
 
@@ -46,15 +65,15 @@ func (c *Custom) UnmarshalJSON(b []byte) error {
 		for _, r := range c.ResourceAccess {
 			for _, role := range r.Roles {
 				c.RoleSet[role] = struct{}{}
+				roleBuilder.WriteString(role)
+				roleBuilder.WriteString(" ")
 			}
 		}
 	}
 
-	return nil
-}
+	c.RoleStr = strings.TrimSpace(roleBuilder.String())
 
-type Roles struct {
-	Roles []string `json:"roles,omitempty"`
+	return nil
 }
 
 func (c *Custom) HasRole(role string) bool {

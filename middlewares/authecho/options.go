@@ -10,6 +10,8 @@ type options struct {
 	config    echojwt.Config
 	newClaims func() jwt.Claims
 	redirect  *RedirectSetting
+
+	claimsHeader *ClaimsHeader
 }
 
 type Option func(*options)
@@ -43,5 +45,11 @@ func WithSkipper(skipper middleware.Skipper) Option {
 func WithRedirect(redirect *RedirectSetting) Option {
 	return func(opts *options) {
 		opts.redirect = redirect
+	}
+}
+
+func WithClaimsHeader(claimsHeader *ClaimsHeader) Option {
+	return func(opts *options) {
+		opts.claimsHeader = claimsHeader
 	}
 }

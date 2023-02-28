@@ -46,11 +46,7 @@ type RedirectSetting struct {
 	CheckAgent bool   `cfg:"check_agent"`
 }
 
-// MiddlewareJWT returns a JWT middleware.
-// Default claims is *claims.Custom.
-//
-// WithRedirect option not usable in this function.
-func MiddlewareJWT(opts ...Option) echo.MiddlewareFunc {
+func getOptions(opts ...Option) options {
 	var options options
 	for _, opt := range opts {
 		opt(&options)
@@ -71,6 +67,22 @@ func MiddlewareJWT(opts ...Option) echo.MiddlewareFunc {
 			return value
 		}
 	}
+
+	options.config.SuccessHandler = func(c echo.Context) {
+		if options.claimsHeader != nil {
+			options.claimsHeader.SetHeaders(c)
+		}
+	}
+
+	return options
+}
+
+// MiddlewareJWT returns a JWT middleware.
+// Default claims is *claims.Custom.
+//
+// WithRedirect option not usable in this function.
+func MiddlewareJWT(opts ...Option) echo.MiddlewareFunc {
+	options := getOptions(opts...)
 
 	return echojwt.WithConfig(options.config)
 }
@@ -80,26 +92,7 @@ func MiddlewareJWT(opts ...Option) echo.MiddlewareFunc {
 //
 // Redirection returns 2 middleware functions.
 func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
-	var options options
-	for _, opt := range opts {
-		opt(&options)
-	}
-
-	if options.config.NewClaimsFunc == nil {
-		options.config.NewClaimsFunc = func(c echo.Context) jwt.Claims {
-			var value jwt.Claims
-
-			if options.newClaims == nil {
-				value = &claims.Custom{}
-			} else {
-				value = options.newClaims()
-			}
-
-			c.Set("claims", value)
-
-			return value
-		}
-	}
+	options := getOptions(opts...)
 
 	functions := []echo.MiddlewareFunc{}
 

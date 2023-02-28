@@ -10,6 +10,69 @@ go get github.com/worldline-go/auth
 
 Check http example: [example/http](example/http)
 
+### Client
+
+Client is usefull to send request with oauth2 token.
+
+First set a provider.
+
+```go
+var providerClient = auth.Provider{
+	Keycloak: &providers.KeyCloak{
+		ClientID:     "test",
+		ClientSecret: "GbkxWi8ZBJvMv2Wsh03JbX183xKAPrEs",
+        // Keycloak server url
+		BaseURL:      "http://localhost:8080",
+		Realm:        "finops",
+        // Scopes is optional
+		Scopes:       []string{"openid", "profile", "email", "offline_access"},
+	},
+}
+```
+
+Then when you create a http.Client you can use the oauth2 transport.
+
+```go
+client := &http.Client{
+    Transport: providerClient.RoundTripperMust(ctx, http.DefaultTransport),
+}
+```
+
+Now you can make request with this client.
+
+### Server
+
+Check the token in the request. Just need to url of keycloak server and the realm.
+
+```go
+var providerServer = auth.Provider{
+	Keycloak: &providers.KeyCloak{
+        // Keycloak server url
+		BaseURL: "http://localhost:8080",
+		Realm:   "finops",
+	},
+}
+```
+
+Then you can check the token in the request.
+
+This is the http based, very simple function but check the our [echo middleware](middlewares/authecho/README.md) to much more advanced operations.
+
+```go
+checkFunc, closeRefresh, err := providerServer.Parser(ctx)
+if err != nil {
+    return fmt.Errorf("creating parser: %w", err)
+}
+defer closeRefresh()
+
+// Check the token in the request
+claimsValue := claims.Custom{}
+token, err := checkFunc(tokenToCheck, &claimsValue)
+if err != nil {
+    return fmt.Errorf("token 👎: %w", err)
+}
+```
+
 ## Development
 
 <details><summary>Keycloak</summary>

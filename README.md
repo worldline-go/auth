@@ -77,7 +77,8 @@ if err != nil {
 
 When enabled redirection in the middleware, the user will be redirected to the oauth2 login page.
 
-This is not a standard flow and we can change update it any time.
+This is not a standard flow and we can change update it any time.  
+Code for echo middleware is [here](middlewares/authecho/README.md).
 
 ![Redirection Flow](docs/redirection-flow.svg)
 

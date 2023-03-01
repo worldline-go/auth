@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/rytsh/liz/utils/shutdown"
 	"github.com/worldline-go/auth/claims"
 )
 
@@ -69,11 +70,12 @@ func httpServer(ctx context.Context) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	shutdown = func() {
+	shutdown.Global.Add("http-server", func() error {
 		if err := httpServerShutdown(server); err != nil {
-			log.Info().Err(err).Msg("shutting down server")
+			return err
 		}
-	}
+		return nil
+	})
 
 	log.Printf("Listening on %s\n", server.Addr)
 	if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {

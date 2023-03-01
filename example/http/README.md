@@ -2,13 +2,20 @@
 
 Before to start this example, change settings in the [provider.go](./provider.go) file.
 
-Run server:
+Run the server and before run docs to generate swagger documentation.
+
 ```sh
-ACTION=server-echo go run .
-# ACTION=server-http go run main.go
+make docs run-server
 ```
 
-Run client:
+Send a request to the server.
+
 ```sh
-ACTION=client go run .
+make run-client
 ```
+
+## Notes
+
+Before to start this example,  
+Add the http://localhost:3000/* in the valid redirect URIs  
+Add the http://localhost:3000 in the valid origins  

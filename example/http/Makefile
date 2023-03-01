@@ -3,13 +3,34 @@ LOCAL_BIN_DIR := $(PWD)/bin
 ## golangci configuration
 GOLANGCI_CONFIG_URL   := https://raw.githubusercontent.com/worldline-go/guide/main/lint/.golangci.yml
 GOLANGCI_LINT_VERSION := v1.51.2
+SWAG_VERSION := $(shell grep github.com/swaggo/swag go.mod | awk '{print $$2}')
 
 .DEFAULT_GOAL := help
 
-.PHONY: keycloak golangci lint run test coverage help
+.PHONY: run-server run-client run keycloak docs golangci lint test coverage clean help
+
+run-server: export ACTION := server-echo
+run-server: run ## Run the application server echo
+run-server-http: export ACTION := server-http
+run-server-http: run ## Run the application server echo
+
+run-client: export ACTION_URL ?= http://localhost:3000/info
+run-client: export ACTION := client
+run-client: run ## Run the application client
+
+run: ## Run the application
+	@go run .
 
 keycloak: ## Run keycloak container
 	docker run -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:20.0.2 start-dev
+
+bin/swag-$(SWAG_VERSION):
+	@echo "> downloading swag@$(SWAG_VERSION)"
+	GOBIN=$(LOCAL_BIN_DIR) go install github.com/swaggo/swag/cmd/swag@$(SWAG_VERSION)
+	mv $(LOCAL_BIN_DIR)/swag $(LOCAL_BIN_DIR)/swag-$(SWAG_VERSION)
+
+docs: bin/swag-$(SWAG_VERSION) ## Generate docs
+	@$(LOCAL_BIN_DIR)/swag-$(SWAG_VERSION) init -g echo.go
 
 .golangci.yml:
 	@$(MAKE) golangci

@@ -73,6 +73,14 @@ if err != nil {
 }
 ```
 
+## Redirection Flow
+
+When enabled redirection in the middleware, the user will be redirected to the oauth2 login page.
+
+This is not a standard flow and we can change update it any time.
+
+![Redirection Flow](docs/redirection-flow.svg)
+
 ## Development
 
 <details><summary>Keycloak</summary>

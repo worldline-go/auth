@@ -11,10 +11,9 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/rytsh/liz/utils/shutdown"
 	"github.com/worldline-go/logz"
 )
-
-var shutdown func()
 
 func main() {
 	logz.InitializeLog(logz.WithCaller(false))
@@ -49,9 +48,7 @@ func main() {
 			ctxCancel()
 		}
 
-		if shutdown != nil {
-			shutdown()
-		}
+		shutdown.Global.Run()
 	}()
 
 	if err := run(ctx); err != nil {
@@ -89,7 +86,12 @@ func httpClient(ctx context.Context) error {
 
 	log.Info().Msg("Sending request...")
 
-	req, err := http.NewRequest(http.MethodGet, "http://localhost:3000", nil)
+	urlRequest := os.Getenv("ACTION_URL")
+	if urlRequest == "" {
+		urlRequest = "http://localhost:3000"
+	}
+
+	req, err := http.NewRequest(http.MethodGet, urlRequest, nil)
 	if err != nil {
 		return fmt.Errorf("creating request: %w", err)
 	}
@@ -110,7 +112,7 @@ func httpClient(ctx context.Context) error {
 	// print headers
 	// log headers
 	for k, v := range resp.Header {
-		log.Info().Msgf("%s: %s", k, v)
+		log.Info().Msgf("Header [%s: %s]", k, v)
 	}
 
 	// status code

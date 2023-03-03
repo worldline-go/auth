@@ -2,9 +2,10 @@ module github.com/worldline-go/auth/example/http
 
 go 1.19
 
-replace github.com/worldline-go/auth => ../../
-
-replace github.com/worldline-go/auth/middlewares/authecho => ../../middlewares/authecho
+replace (
+	github.com/worldline-go/auth => ../../
+	github.com/worldline-go/auth/middlewares/authecho => ../../middlewares/authecho
+)
 
 require (
 	github.com/labstack/echo/v4 v4.10.0
@@ -12,10 +13,11 @@ require (
 	github.com/rytsh/liz/utils/shutdown v0.1.0
 	github.com/swaggo/echo-swagger v1.3.5
 	github.com/swaggo/swag v1.8.10
-	github.com/worldline-go/auth v0.3.0
-	github.com/worldline-go/auth/middlewares/authecho v0.3.3
+	github.com/worldline-go/auth v0.4.0
+	github.com/worldline-go/auth/middlewares/authecho v0.0.0-00010101000000-000000000000
 	github.com/worldline-go/logz v0.3.1
 	github.com/worldline-go/logz/logecho v0.1.0
+	github.com/worldline-go/utility/swagger v0.1.0
 	github.com/ziflex/lecho/v3 v3.3.0
 )
 

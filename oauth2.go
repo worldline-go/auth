@@ -7,6 +7,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// RoundTripperMust panic if RoundTripper return error.
 func (p *Provider) RoundTripperMust(ctx context.Context, transport http.RoundTripper) http.RoundTripper {
 	roundTripper, err := p.RoundTripper(ctx, transport)
 	if err != nil {
@@ -16,16 +17,18 @@ func (p *Provider) RoundTripperMust(ctx context.Context, transport http.RoundTri
 	return roundTripper
 }
 
-// RoundTripper returns a new RoundTripper that adds an OAuth2 Authorization header.
+// RoundTripper returns a new RoundTripper that adds an OAuth2 Transport.
+//
+// Uses active provider's ClientConfig.
 func (p *Provider) RoundTripper(ctx context.Context, transport http.RoundTripper) (http.RoundTripper, error) {
-	activeProvider, err := p.ActiveProvider()
+	src, err := p.ActiveProvider().ClientConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	src, err := activeProvider.Config()
-	if err != nil {
-		return nil, err
+	// for noop provider
+	if src == nil {
+		return transport, nil
 	}
 
 	return &oauth2.Transport{

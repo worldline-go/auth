@@ -5,27 +5,29 @@ import (
 	"time"
 )
 
-type optionsParser struct {
-	jwt bool
+type optionsActiveProvider struct {
+	noop bool
 }
 
-type OptionParser func(options *optionsParser)
+type OptionActiveProvider func(options *optionsActiveProvider)
 
-func WithJwt() OptionParser {
-	return func(options *optionsParser) {
-		options.jwt = true
+// WithNoop sets the active provider to noop.
+func WithNoop(v bool) OptionActiveProvider {
+	return func(options *optionsActiveProvider) {
+		options.noop = v
 	}
 }
 
 type optionsJWK struct {
+	client              *http.Client
 	refreshErrorHandler func(err error)
 	refreshInterval     time.Duration
 	refreshUnknownKID   bool
-	client              *http.Client
 }
 
 type OptionJWK func(options *optionsJWK)
 
+// WithRefreshErrorHandler sets the refresh error handler for the jwt.Key.
 func WithRefreshErrorHandler(fn func(err error)) OptionJWK {
 	return func(options *optionsJWK) {
 		options.refreshErrorHandler = fn
@@ -39,12 +41,14 @@ func WithRefreshInterval(d time.Duration) OptionJWK {
 	}
 }
 
+// WithRefreshUnknownKID sets the refresh unknown KID for the jwt.Key, default is false.
 func WithRefreshUnknownKID(v bool) OptionJWK {
 	return func(options *optionsJWK) {
 		options.refreshUnknownKID = v
 	}
 }
 
+// WithClient is used to set the http.Client used to fetch the JWKs.
 func WithClient(client *http.Client) OptionJWK {
 	return func(options *optionsJWK) {
 		options.client = client

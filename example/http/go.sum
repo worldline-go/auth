@@ -114,6 +114,8 @@ github.com/worldline-go/logz v0.3.1 h1:Xca7jrnAz601lcpTwf1ZdJoeKTbziEdmWJsl4vuaa
 github.com/worldline-go/logz v0.3.1/go.mod h1:4+EFs4tlquIgGoE7jhwF36TO1I5C5PO88H/0li2+13A=
 github.com/worldline-go/logz/logecho v0.1.0 h1:gEYYpqy52m+wmWvAqkO+lJN+pOP/FKY7E4KKIHiGjnU=
 github.com/worldline-go/logz/logecho v0.1.0/go.mod h1:YEQ078KVB5Zl+EYm9tK50ZLBHQBNBOyWeGL9kn4tDBU=
+github.com/worldline-go/utility/swagger v0.1.0 h1:wXg9RguiRjeSxGJT3MK4ghV+vQinyP1RbbfYklcqssk=
+github.com/worldline-go/utility/swagger v0.1.0/go.mod h1:dpxmnRMfHWTZrWa2Ttf53W/gaqBJc5SmG6NXJgqR5lk=
 github.com/yuin/goldmark v1.4.0/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/ziflex/lecho/v3 v3.3.0 h1:Z6KnMf0ubJX93W8Np37DBIZalFubYDq0a92hv3S/9CY=

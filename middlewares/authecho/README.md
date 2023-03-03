@@ -1,7 +1,7 @@
 # auth library for echo
 
 This library provides a middleware for echo web-framework to handle authentication.  
-Features are auto-redirection to login page, auto-refresh of access token, and auto-logout when access token is expired.
+Features are auto-redirection to login page, auto-refresh of access token.
 
 There are a few other middlewares in it that can help you to build a complete authentication system.
 
@@ -14,19 +14,26 @@ go get github.com/worldline-go/auth/middlewares/authecho
 It is working based on the jwks functions. Our auth library already return a jwks key function.
 
 ```go
+// set a noop value to disable authentication in test mode
+noop := strings.EqualFold(os.Getenv("ENV"), "test")
+
 // jwks part by auth library
-jwks, err := providerServer.GetJwks(ctx)
+provider := providerConfig.ActiveProvider(auth.WithNoop(noop))
+
+// jwks key function
+jwks, err := provider.JWTKeyFunc(ctx)
 if err != nil {
     return err
 }
 
-// close auth retantion in background
+// close jwks retantion in background
 defer jwks.EndBackground()
 
 // echo part
 
 // if we want to use the middleware for all routes
 e.Use(authecho.MiddlewareJWT(
+    authecho.WithNoop(noop),
     authecho.WithKeyFunc(jwks.Keyfunc),
     authecho.WithSkipper(authecho.NewSkipper()),
 ))
@@ -34,6 +41,7 @@ e.Use(authecho.MiddlewareJWT(
 // if we want to use the middleware for some routes
 // add this to the parameters of the route
 mJWT := authecho.MiddlewareJWT(
+    authecho.WithNoop(noop),
     authecho.WithKeyFunc(jwks.Keyfunc),
     authecho.WithSkipper(authecho.NewSkipper()),
 )
@@ -42,10 +50,26 @@ mJWT := authecho.MiddlewareJWT(
 // it will check transaction role and email scope, if not exist it will return 403
 e.GET("/", func(c echo.Context) error {
     //...
-}, authecho.MiddlewareRole(authecho.WithRoles("transaction")), authecho.MiddlewareScope(authecho.WithScopes("email")))
+}, authecho.MiddlewareRole(
+        // skip the middleware if noop is true
+        authecho.WithNoopRole(noop),
+        authecho.WithRoles("transaction"),
+    ),
+    authecho.MiddlewareScope(
+        // skip the middleware if noop is true
+        authecho.WithNoopScope(noop),
+        authecho.WithScopes("email"),
+    ),
+)
 ```
 
 ## Options
+
+__WithNoop__ return a new noop function, it is useful when you want to disable the middleware for some routes.
+
+```go
+authecho.WithNoop(noop bool)
+```
 
 __WithKeyFunc__ return a new key function, it is required to use the jwks key function.
 
@@ -113,6 +137,8 @@ Callback string `cfg:"callback"`
 MaxAge int `cfg:"max_age"`
 // Path for the cookie.
 Path string `cfg:"path"`
+// Domain for the cookie.
+Domain string `cfg:"domain"`
 // BaseURL is the base URL to use for the redirect.
 // Default is the request Host with checking the X-Forwarded-Host header.
 BaseURL string `cfg:"base_url"`
@@ -121,6 +147,11 @@ BaseURL string `cfg:"base_url"`
 Schema string `cfg:"schema"`
 // Secure is the secure flag for the cookie.
 Secure bool `cfg:"secure"`
+
+// UseSession is use session instead of cookie.
+UseSession bool `cfg:"use_session"`
+// SessionKey secret key for session.
+SessionKey string `cfg:"session_key"`
 
 // TokenHeader to add token to header.
 TokenHeader bool `cfg:"token_header"`

@@ -14,11 +14,17 @@ import (
 )
 
 func httpServer(ctx context.Context) error {
-	checkFunc, closeRefresh, err := providerServer.Parser(ctx)
+	provider := providerServer.ActiveProvider()
+	if provider == nil {
+		return fmt.Errorf("no active provider")
+	}
+
+	keyFunc, err := provider.JWTKeyFunc(ctx)
 	if err != nil {
 		return fmt.Errorf("creating parser: %w", err)
 	}
-	defer closeRefresh()
+
+	defer keyFunc.EndBackground()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +38,7 @@ func httpServer(ctx context.Context) error {
 
 		// parse token
 		claimsValue := claims.Custom{}
-		token, err := checkFunc(authorization[7:], &claimsValue)
+		token, err := keyFunc.Parser(authorization[7:], &claimsValue)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			log.Error().Err(err).Msg("parsing token")

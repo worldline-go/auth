@@ -11,6 +11,7 @@ type options struct {
 	newClaims func() jwt.Claims
 	redirect  *RedirectSetting
 
+	noop         bool
 	claimsHeader *ClaimsHeader
 }
 
@@ -19,6 +20,12 @@ type Option func(*options)
 func WithConfig(cfg echojwt.Config) Option {
 	return func(opts *options) {
 		opts.config = cfg
+	}
+}
+
+func WithNoop(noop bool) Option {
+	return func(opts *options) {
+		opts.noop = noop
 	}
 }
 

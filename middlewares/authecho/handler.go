@@ -61,6 +61,22 @@ func getOptions(opts ...Option) options {
 		opt(&options)
 	}
 
+	if options.noop {
+		options.config.ParseTokenFunc = func(c echo.Context, auth string) (interface{}, error) {
+			if auth == "noop" {
+				return "noop", nil
+			}
+
+			return nil, fmt.Errorf("invalid auth")
+		}
+
+		options.config.TokenLookupFuncs = []middleware.ValuesExtractor{
+			func(c echo.Context) ([]string, error) {
+				return []string{"noop"}, nil
+			},
+		}
+	}
+
 	if options.config.NewClaimsFunc == nil {
 		options.config.NewClaimsFunc = func(c echo.Context) jwt.Claims {
 			var value jwt.Claims
@@ -105,7 +121,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 
 	functions := []echo.MiddlewareFunc{}
 
-	if options.redirect != nil {
+	if !options.noop && options.redirect != nil {
 		if options.redirect.MaxAge == 0 {
 			options.redirect.MaxAge = 3600
 		}

@@ -1,19 +1,16 @@
 package auth
 
 import (
-	"fmt"
-
 	"github.com/worldline-go/auth/providers"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-type Configurer interface {
-	Config() (*clientcredentials.Config, error)
-	// CertURL returns the certificate URL and the public key-id.
-	CertURL() (string, error)
+type InfProvider interface {
+	ClientConfig() (*clientcredentials.Config, error)
 
-	GetTokenURL() (string, error)
-	GetAuthURL() (string, error)
+	GetCertURL() string
+	GetTokenURL() string
+	GetAuthURL() string
 	GetClientID() string
 	GetClientSecret() string
 }
@@ -24,22 +21,37 @@ type Provider struct {
 }
 
 // ActiveProvider returns the active provider or the first provider if none is active.
-func (p *Provider) ActiveProvider() (Configurer, error) {
+//
+// Returns nil if no provider is configured.
+func (p *Provider) ActiveProvider(opts ...OptionActiveProvider) (ret InfProviderExtra) {
+	var o optionsActiveProvider
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	if o.noop {
+		return Noop{}
+	}
+
 	if p.Active != "" {
 		switch p.Active {
 		case "keycloak":
-			return p.Keycloak, nil
+			return &ProviderExtra{
+				InfProvider: p.Keycloak,
+			}
 		default:
-			return nil, fmt.Errorf("unknown provider: %s", p.Active)
+			return nil
 		}
 	}
 
 	// select first non nil provider
 	if p.Keycloak != nil {
-		return p.Keycloak, nil
+		return &ProviderExtra{
+			InfProvider: p.Keycloak,
+		}
 	}
 
-	return nil, fmt.Errorf("no provider configured")
+	return nil
 }
 
 // SetActiveProvider return the provider with the given name as active without modifying the original provider.

@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -10,8 +13,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/rytsh/liz/utils/shutdown"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"github.com/worldline-go/auth"
 	"github.com/worldline-go/auth/claims"
 	"github.com/worldline-go/auth/example/http/docs"
+	_ "github.com/worldline-go/auth/example/http/docs"
 	"github.com/worldline-go/auth/middlewares/authecho"
 	"github.com/worldline-go/logz/logecho"
 	"github.com/ziflex/lecho/v3"
@@ -139,22 +144,32 @@ func (API) Ping(c echo.Context) error {
 // @description				Description for what is this security definition being used
 
 // @securitydefinitions.oauth2.application	OAuth2Application
-// @tokenUrl								http://localhost:8080/realms/master/protocol/openid-connect/token
+// @tokenUrl								[[ .Custom.tokenUrl ]]
 
 // @securitydefinitions.oauth2.implicit	OAuth2Implicit
-// @authorizationUrl						http://localhost:8080/realms/master/protocol/openid-connect/auth
+// @authorizationUrl						[[ .Custom.authUrl ]]
 
 // @securitydefinitions.oauth2.password	OAuth2Password
-// @tokenUrl								http://localhost:8080/realms/master/protocol/openid-connect/token
+// @tokenUrl								[[ .Custom.tokenUrl ]]
 
 // @securitydefinitions.oauth2.accessCode	OAuth2AccessCode
-// @tokenUrl								http://localhost:8080/realms/master/protocol/openid-connect/token
-// @authorizationUrl						http://localhost:8080/realms/master/protocol/openid-connect/auth
+// @tokenUrl								[[ .Custom.tokenUrl ]]
+// @authorizationUrl						[[ .Custom.authUrl ]]
 func echoServer(ctx context.Context) error {
 	e := echo.New()
 	e.HideBanner = true
 
-	docs.SetVersion()
+	noop := strings.EqualFold(os.Getenv("ENV"), "test")
+
+	// if noop is true, it will return a fake provider
+	provider := providerServer.ActiveProvider(auth.WithNoop(noop))
+	if provider == nil {
+		return fmt.Errorf("no authentication provider found")
+	}
+
+	if err := docs.Info("v0.0.0", provider); err != nil {
+		return err
+	}
 
 	e.Logger = lecho.New(log.With().Str("component", "server").Logger())
 
@@ -179,7 +194,7 @@ func echoServer(ctx context.Context) error {
 	)
 
 	// auth middleware
-	jwks, err := providerServer.GetJwks(ctx)
+	jwks, err := provider.JWTKeyFunc(ctx, auth.WithRefreshInterval(10*time.Second))
 	if err != nil {
 		return err
 	}
@@ -187,6 +202,7 @@ func echoServer(ctx context.Context) error {
 	defer jwks.EndBackground()
 
 	jwtMiddleware := authecho.MiddlewareJWT(
+		authecho.WithNoop(noop),
 		authecho.WithKeyFunc(jwks.Keyfunc),
 		authecho.WithSkipper(authecho.NewSkipper()),
 	)
@@ -202,7 +218,11 @@ func echoServer(ctx context.Context) error {
 	e.GET("/scope/:scope", api.CheckMyScope, jwtMiddleware)
 	// restricted zone with role
 	e.POST("/value", api.PostValue,
-		jwtMiddleware, authecho.MiddlewareRole(authecho.WithRoles("projectX")),
+		jwtMiddleware, authecho.MiddlewareRole(
+			// don't check role if noop is true
+			authecho.WithNoopRole(noop),
+			authecho.WithRoles("projectX"),
+		),
 	)
 
 	// Graceful shutdown

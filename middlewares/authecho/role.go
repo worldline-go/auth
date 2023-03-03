@@ -23,6 +23,10 @@ func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			if options.noop {
+				return next(c)
+			}
+
 			if len(methodSet) > 0 {
 				if _, ok := methodSet[c.Request().Method]; !ok {
 					return next(c)
@@ -48,6 +52,7 @@ func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 type optionsRole struct {
 	roles   []string
 	methods []string
+	noop    bool
 }
 
 type OptionRole func(*optionsRole)
@@ -63,5 +68,12 @@ func WithRoles(roles ...string) OptionRole {
 func WithMethodsRole(methods ...string) OptionRole {
 	return func(opts *optionsRole) {
 		opts.methods = methods
+	}
+}
+
+// WithNoopRole sets the noop option.
+func WithNoopRole(v bool) OptionRole {
+	return func(opts *optionsRole) {
+		opts.noop = v
 	}
 }

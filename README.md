@@ -59,15 +59,21 @@ Then you can check the token in the request.
 This is the http based, very simple function but check the our [echo middleware](middlewares/authecho/README.md) to much more advanced operations.
 
 ```go
-checkFunc, closeRefresh, err := providerServer.Parser(ctx)
-if err != nil {
-    return fmt.Errorf("creating parser: %w", err)
+provider := providerServer.ActiveProvider()
+if provider == nil {
+	return fmt.Errorf("no active provider")
 }
-defer closeRefresh()
+
+keyFunc, err := provider.JWTKeyFunc(ctx)
+if err != nil {
+	return fmt.Errorf("creating parser: %w", err)
+}
+
+defer keyFunc.EndBackground()
 
 // Check the token in the request
 claimsValue := claims.Custom{}
-token, err := checkFunc(tokenToCheck, &claimsValue)
+token, err := keyFunc.Parser(tokenToCheck, &claimsValue)
 if err != nil {
     return fmt.Errorf("token 👎: %w", err)
 }
@@ -81,25 +87,3 @@ This is not a standard flow and we can change update it any time.
 Code for echo middleware is [here](middlewares/authecho/README.md).
 
 ![Redirection Flow](docs/redirection-flow.svg)
-
-## Development
-
-<details><summary>Keycloak</summary>
-
-Run keycloak in docker
-
-```sh
-make keycloak
-```
-
-Open http://localhost:8080 and login with admin/admin.
-
-Create a new realm called `finops` and add a new client called `test`.  
-Choice client type `openid-connect`.
-Enable `Client Authentication` and `Authorization Enabled`.
-
-We connect with oauth2 transport with our client id and secret. In server side we use the public key to verify the token.
-
-Public key id find in the realms key settings.
-
-</details>

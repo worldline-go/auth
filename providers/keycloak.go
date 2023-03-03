@@ -22,38 +22,47 @@ type KeyCloak struct {
 
 	// End of extra settings for clients.
 
+	// CertURL is the resource server's public key URL.
+	//
+	// BaseURL and REALM are used to construct the CertURL.
+	CertURL string `cfg:"cert_url"`
+
 	// AuthURL is the resource server's authorization endpoint
 	// use for redirection to login page.
 	//
-	// BaseURL and REALM are used to construct the token URL.
+	// BaseURL and REALM are used to construct the AuthURL.
 	AuthURL string `cfg:"auth_url"`
 
 	// TokenURL is the resource server's token endpoint
 	// URL. This is a constant specific to each server.
 	//
-	// BaseURL and REALM are used to construct the token URL.
+	// BaseURL and REALM are used to construct the TokenURL.
 	TokenURL string `cfg:"token_url"`
 
 	// BaseURL is the resource server's base URL like https://keycloak:8080.
+	//
+	// If your server has auth path set like https://keycloak:8080/auth/
 	BaseURL string `cfg:"base_url"`
 	// Realm is the resource server's realm like master.
 	Realm string `cfg:"realm"`
 }
 
-func (p *KeyCloak) GetAuthURL() (string, error) {
-	if err := p.SetAuthURL(); err != nil {
-		return "", err
-	}
+func (p *KeyCloak) GetCertURL() string {
+	_ = p.setCertURL()
 
-	return p.AuthURL, nil
+	return p.CertURL
 }
 
-func (p *KeyCloak) GetTokenURL() (string, error) {
-	if err := p.SetTokenURL(); err != nil {
-		return "", err
-	}
+func (p *KeyCloak) GetAuthURL() string {
+	_ = p.setAuthURL()
 
-	return p.TokenURL, nil
+	return p.AuthURL
+}
+
+func (p *KeyCloak) GetTokenURL() string {
+	_ = p.setTokenURL()
+
+	return p.TokenURL
 }
 
 func (p *KeyCloak) GetClientID() string {
@@ -64,7 +73,22 @@ func (p *KeyCloak) GetClientSecret() string {
 	return p.ClientSecret
 }
 
-func (p *KeyCloak) SetTokenURL() error {
+func (p *KeyCloak) ClientConfig() (*clientcredentials.Config, error) {
+	tokenURL := p.GetTokenURL()
+	if tokenURL == "" {
+		return nil, fmt.Errorf("tokenURL empty")
+	}
+
+	return &clientcredentials.Config{
+		ClientID:     p.ClientID,
+		ClientSecret: p.ClientSecret,
+		TokenURL:     p.TokenURL,
+		Scopes:       p.Scopes,
+		AuthStyle:    oauth2.AuthStyleInHeader,
+	}, nil
+}
+
+func (p *KeyCloak) setTokenURL() error {
 	if p.TokenURL != "" {
 		return nil
 	}
@@ -85,7 +109,7 @@ func (p *KeyCloak) SetTokenURL() error {
 	return nil
 }
 
-func (p *KeyCloak) SetAuthURL() error {
+func (p *KeyCloak) setAuthURL() error {
 	if p.AuthURL != "" {
 		return nil
 	}
@@ -106,36 +130,23 @@ func (p *KeyCloak) SetAuthURL() error {
 	return nil
 }
 
-func (p *KeyCloak) Config() (*clientcredentials.Config, error) {
-	if err := p.SetTokenURL(); err != nil {
-		return nil, err
+func (p *KeyCloak) setCertURL() error {
+	if p.CertURL != "" {
+		return nil
 	}
 
-	if err := p.SetAuthURL(); err != nil {
-		return nil, err
-	}
-
-	return &clientcredentials.Config{
-		ClientID:     p.ClientID,
-		ClientSecret: p.ClientSecret,
-		TokenURL:     p.TokenURL,
-		Scopes:       p.Scopes,
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}, nil
-}
-
-// PublicKeyURL returns the resource server's public key URL.
-func (p *KeyCloak) CertURL() (string, error) {
 	if p.BaseURL == "" || p.Realm == "" {
-		return "", fmt.Errorf("base_url and realm are required")
+		return fmt.Errorf("base_url and realm are required")
 	}
 
 	parsedURL, err := url.Parse(p.BaseURL)
 	if err != nil {
-		return "", fmt.Errorf("base_url is invalid: %s", err)
+		return fmt.Errorf("base_url is invalid: %s", err)
 	}
 
 	parsedURL.Path = path.Join(parsedURL.Path, "realms", p.Realm, "protocol/openid-connect/certs")
 
-	return parsedURL.String(), nil
+	p.CertURL = parsedURL.String()
+
+	return nil
 }

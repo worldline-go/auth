@@ -23,6 +23,10 @@ func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			if options.noop {
+				return next(c)
+			}
+
 			if len(methodSet) > 0 {
 				if _, ok := methodSet[c.Request().Method]; !ok {
 					return next(c)
@@ -48,6 +52,7 @@ func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 type optionsScope struct {
 	scopes  []string
 	methods []string
+	noop    bool
 }
 
 type OptionScope func(*optionsScope)
@@ -63,5 +68,12 @@ func WithScopes(scopes ...string) OptionScope {
 func WithMethodsScope(methods ...string) OptionScope {
 	return func(opts *optionsScope) {
 		opts.methods = methods
+	}
+}
+
+// WithNoopScope sets the noop option.
+func WithNoopScope(v bool) OptionScope {
+	return func(opts *optionsScope) {
+		opts.noop = v
 	}
 }

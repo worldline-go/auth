@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
+	"github.com/worldline-go/auth/store"
 )
 
-func SaveRedirectQueryParams(c echo.Context, cookieName string, redirect *RedirectSetting, sessionStore *sessions.FilesystemStore) {
+func SaveRedirectQueryParams(c echo.Context, cookieName string, redirect *RedirectSetting, sessionStore store.SessionStore) {
 	values := url.Values{}
 
 	q := c.Request().URL.Query()
@@ -23,15 +23,17 @@ func SaveRedirectQueryParams(c echo.Context, cookieName string, redirect *Redire
 	}
 
 	if redirect.UseSession {
-		RecordSessionCode(c, values.Encode(), cookieName+"_code", sessionStore)
+		if err := store.SetSession(c.Request(), c.Response(), values.Encode(), cookieName+"_code", "query", sessionStore); err != nil {
+			c.Logger().Debug("error save session", err)
+		}
 
 		return
 	}
 
-	RecordCookieCode(c, values.Encode(), cookieName+"_code", redirect)
+	store.SetCookie(c.Response(), values.Encode(), cookieName+"_code", redirect.MapConfigCookie())
 }
 
-func SetRedirectQueryParams(c echo.Context, cookieName string, redirect *RedirectSetting, sessionStore *sessions.FilesystemStore) {
+func SetRedirectQueryParams(c echo.Context, cookieName string, redirect *RedirectSetting, sessionStore store.SessionStore) {
 	value := ""
 	if redirect.UseSession {
 		session, _ := sessionStore.Get(c.Request(), cookieName+"_code")
@@ -70,12 +72,12 @@ func SetRedirectQueryParams(c echo.Context, cookieName string, redirect *Redirec
 	c.Request().URL.RawQuery = q.Encode()
 
 	if redirect.UseSession {
-		RemoveSession(c, cookieName+"_code", sessionStore)
+		_ = store.RemoveSession(c.Request(), c.Response(), cookieName+"_code", sessionStore)
 
 		return
 	}
 
-	RemoveCookie(c, cookieName+"_code", redirect)
+	store.RemoveCookie(c.Response(), cookieName+"_code", redirect.MapConfigCookie())
 }
 
 func RemoveAuthQueryParams(r *http.Request) {

@@ -8,8 +8,7 @@ import (
 )
 
 // RoundTripperMust panic if RoundTripper return error.
-func (p *Provider) RoundTripperMust(ctx context.Context, transport http.RoundTripper) http.RoundTripper {
-	roundTripper, err := p.RoundTripper(ctx, transport)
+func RoundTripperMust(roundTripper http.RoundTripper, err error) http.RoundTripper {
 	if err != nil {
 		panic(err)
 	}
@@ -20,15 +19,10 @@ func (p *Provider) RoundTripperMust(ctx context.Context, transport http.RoundTri
 // RoundTripper returns a new RoundTripper that adds an OAuth2 Transport.
 //
 // Uses active provider's ClientConfig.
-func (p *Provider) RoundTripper(ctx context.Context, transport http.RoundTripper) (http.RoundTripper, error) {
-	src, err := p.ActiveProvider().ClientConfig()
+func (p *ProviderExtra) RoundTripper(ctx context.Context, transport http.RoundTripper) (http.RoundTripper, error) {
+	src, err := p.ClientConfig()
 	if err != nil {
 		return nil, err
-	}
-
-	// for noop provider
-	if src == nil {
-		return transport, nil
 	}
 
 	return &oauth2.Transport{

@@ -33,8 +33,18 @@ var providerClient = auth.Provider{
 Then when you create a http.Client you can use the oauth2 transport.
 
 ```go
+provider := providerClient.ActiveProvider()
+if == nil {
+	return fmt.Errorf("no active provider")
+}
+
+roundTripper, err := provider.RoundTripper(ctx, http.DefaultTransport)
+if err != nil {
+	return fmt.Errorf("creating round tripper: %w", err)
+}
+
 client := &http.Client{
-    Transport: providerClient.RoundTripperMust(ctx, http.DefaultTransport),
+    Transport: roundTripper,
 }
 ```
 

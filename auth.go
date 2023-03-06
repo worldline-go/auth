@@ -1,6 +1,10 @@
 package auth
 
 import (
+	"context"
+	"net/http"
+
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/worldline-go/auth/providers"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -15,7 +19,24 @@ type InfProvider interface {
 	GetClientSecret() string
 }
 
+type InfJWTKeyFunc interface {
+	Keyfunc(token *jwt.Token) (interface{}, error)
+	EndBackground()
+	Parser(tokenString string, claims jwt.Claims) (*jwt.Token, error)
+}
+
+type InfProviderExtra interface {
+	InfProvider
+	// JWTKeyFunc returns the JWT key used to verify the token.
+	JWTKeyFunc(ctx context.Context, opts ...OptionJWK) (InfJWTKeyFunc, error)
+	IsNoop() bool
+	RoundTripper(ctx context.Context, transport http.RoundTripper) (http.RoundTripper, error)
+}
+
 type Provider struct {
+	// Active is the name of the active provider, if empty the first provider is used.
+	//
+	// If set to "noop" the Noop provider is used.
 	Active   string              `cfg:"active"`
 	Keycloak *providers.KeyCloak `cfg:"keycloak"`
 }
@@ -39,6 +60,8 @@ func (p *Provider) ActiveProvider(opts ...OptionActiveProvider) (ret InfProvider
 			return &ProviderExtra{
 				InfProvider: p.Keycloak,
 			}
+		case "noop":
+			return Noop{}
 		default:
 			return nil
 		}

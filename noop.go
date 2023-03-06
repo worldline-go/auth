@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/oauth2/clientcredentials"
@@ -39,6 +40,10 @@ func (Noop) JWTKeyFunc(ctx context.Context, opts ...OptionJWK) (InfJWTKeyFunc, e
 
 func (Noop) IsNoop() bool {
 	return true
+}
+
+func (Noop) RoundTripper(ctx context.Context, transport http.RoundTripper) (http.RoundTripper, error) {
+	return transport, nil
 }
 
 type NoopJWTKey struct{}

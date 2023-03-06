@@ -6,22 +6,8 @@ import (
 	"time"
 
 	"github.com/MicahParks/keyfunc"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/rs/zerolog/log"
 )
-
-type InfJWTKeyFunc interface {
-	Keyfunc(token *jwt.Token) (interface{}, error)
-	EndBackground()
-	Parser(tokenString string, claims jwt.Claims) (*jwt.Token, error)
-}
-
-type InfProviderExtra interface {
-	InfProvider
-	// JWTKeyFunc returns the JWT key used to verify the token.
-	JWTKeyFunc(ctx context.Context, opts ...OptionJWK) (InfJWTKeyFunc, error)
-	IsNoop() bool
-}
 
 type ProviderExtra struct {
 	InfProvider

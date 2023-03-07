@@ -79,9 +79,19 @@ func run(ctx context.Context) error {
 func httpClient(ctx context.Context) error {
 	log.Info().Msg("Creating client...")
 
+	provider := providerClient.ActiveProvider()
+	if provider == nil {
+		return fmt.Errorf("no active provider")
+	}
+
+	transport, err := provider.RoundTripper(ctx, http.DefaultTransport)
+	if err != nil {
+		return fmt.Errorf("creating transport: %w", err)
+	}
+
 	client := &http.Client{
 		Timeout:   10 * time.Second,
-		Transport: providerClient.RoundTripperMust(ctx, http.DefaultTransport),
+		Transport: transport,
 	}
 
 	log.Info().Msg("Sending request...")

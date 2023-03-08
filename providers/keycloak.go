@@ -15,7 +15,7 @@ type KeyCloak struct {
 	ClientID string `cfg:"client_id"`
 
 	// ClientSecret is the application's secret.
-	ClientSecret string `cfg:"client_secret"`
+	ClientSecret string `cfg:"client_secret" log:"false"`
 
 	// Scope specifies optional requested permissions.
 	Scopes []string `cfg:"scopes"`

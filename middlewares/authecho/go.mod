@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/labstack/echo-jwt/v4 v4.1.0
 	github.com/labstack/echo/v4 v4.10.2
-	github.com/worldline-go/auth v0.4.3
+	github.com/worldline-go/auth v0.4.4
 )
 
 require (

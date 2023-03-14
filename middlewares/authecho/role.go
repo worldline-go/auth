@@ -27,19 +27,23 @@ func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 				return next(c)
 			}
 
+			if v, ok := c.Get(authNoopKey).(bool); ok && v {
+				return next(c)
+			}
+
 			if len(methodSet) > 0 {
 				if _, ok := methodSet[c.Request().Method]; !ok {
 					return next(c)
 				}
 			}
 
-			claims, ok := c.Get("claims").(*claims.Custom)
+			claimsV, ok := c.Get("claims").(*claims.Custom)
 			if !ok {
 				return echo.NewHTTPError(http.StatusUnauthorized, "claims not found")
 			}
 
 			for _, role := range options.roles {
-				if !claims.HasRole(role) {
+				if !claimsV.HasRole(role) {
 					return echo.NewHTTPError(http.StatusUnauthorized, "role not authorized")
 				}
 			}
@@ -72,6 +76,8 @@ func WithMethodsRole(methods ...string) OptionRole {
 }
 
 // WithNoopRole sets the noop option.
+//
+// If provider already has a noop, this one will be ignored.
 func WithNoopRole(v bool) OptionRole {
 	return func(opts *optionsRole) {
 		opts.noop = v

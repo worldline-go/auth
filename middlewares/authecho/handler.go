@@ -19,25 +19,50 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v4"
 )
 
+const (
+	noopKey     = "noop"
+	authNoopKey = "auth_noop"
+)
+
 func getOptions(opts ...Option) options {
 	var options options
 	for _, opt := range opts {
 		opt(&options)
 	}
 
-	if options.noop {
+	// is it noop?
+	noop := options.noop
+	if !noop {
+		if options.config.KeyFunc != nil {
+			if v, _ := options.config.KeyFunc(&jwt.Token{}); v == noopKey {
+				noop = true
+			}
+		}
+	}
+
+	options.config.BeforeFunc = func(c echo.Context) {
+		if noop {
+			c.Set(authNoopKey, true)
+		}
+	}
+
+	options.config.TokenLookupFuncs = []middleware.ValuesExtractor{
+		func(c echo.Context) ([]string, error) {
+			if v, ok := c.Get(authNoopKey).(bool); ok && v {
+				return []string{noopKey}, nil
+			}
+
+			return nil, fmt.Errorf("skip")
+		},
+	}
+
+	if noop {
 		options.config.ParseTokenFunc = func(c echo.Context, auth string) (interface{}, error) {
-			if auth == "noop" {
-				return "noop", nil
+			if v, ok := c.Get(authNoopKey).(bool); ok && v {
+				return noopKey, nil
 			}
 
 			return nil, fmt.Errorf("invalid auth")
-		}
-
-		options.config.TokenLookupFuncs = []middleware.ValuesExtractor{
-			func(c echo.Context) ([]string, error) {
-				return []string{"noop"}, nil
-			},
 		}
 	}
 

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/worldline-go/auth/providers"
@@ -55,7 +56,7 @@ func (p *Provider) ActiveProvider(opts ...OptionActiveProvider) (ret InfProvider
 	}
 
 	if p.Active != "" {
-		switch p.Active {
+		switch strings.ToLower(p.Active) {
 		case "keycloak":
 			return &ProviderExtra{
 				InfProvider: p.Keycloak,

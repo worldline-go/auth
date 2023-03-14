@@ -17,6 +17,9 @@ type options struct {
 
 type Option func(*options)
 
+// WithConfig sets the config to use
+//
+// Don't use if you don't know what you are doing.
 func WithConfig(cfg echojwt.Config) Option {
 	return func(opts *options) {
 		opts.config = cfg

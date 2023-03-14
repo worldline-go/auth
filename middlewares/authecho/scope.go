@@ -27,19 +27,23 @@ func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 				return next(c)
 			}
 
+			if v, ok := c.Get(authNoopKey).(bool); ok && v {
+				return next(c)
+			}
+
 			if len(methodSet) > 0 {
 				if _, ok := methodSet[c.Request().Method]; !ok {
 					return next(c)
 				}
 			}
 
-			claims, ok := c.Get("claims").(*claims.Custom)
+			claimsV, ok := c.Get("claims").(*claims.Custom)
 			if !ok {
 				return echo.NewHTTPError(http.StatusUnauthorized, "claims not found")
 			}
 
 			for _, scope := range options.scopes {
-				if !claims.HasScope(scope) {
+				if !claimsV.HasScope(scope) {
 					return echo.NewHTTPError(http.StatusUnauthorized, "scope not authorized")
 				}
 			}
@@ -72,6 +76,8 @@ func WithMethodsScope(methods ...string) OptionScope {
 }
 
 // WithNoopScope sets the noop option.
+//
+// If provider already has a noop, this one will be ignored.
 func WithNoopScope(v bool) OptionScope {
 	return func(opts *optionsScope) {
 		opts.noop = v

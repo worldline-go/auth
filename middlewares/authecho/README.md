@@ -16,6 +16,8 @@ It is working based on the jwks functions. Our auth library already return a jwk
 ```go
 // set a noop value to disable authentication in test mode
 noop := strings.EqualFold(os.Getenv("ENV"), "test")
+// or you can set the "noop" to value of active auth provider
+// providerConfig.Active = "noop"
 
 // jwks part by auth library
 provider := providerConfig.ActiveProvider(auth.WithNoop(noop))
@@ -33,7 +35,8 @@ defer jwks.EndBackground()
 
 // if we want to use the middleware for all routes
 e.Use(authecho.MiddlewareJWT(
-    authecho.WithNoop(noop),
+    // if your jwks from a noop provider, noop always true
+    // authecho.WithNoop(noop),
     authecho.WithKeyFunc(jwks.Keyfunc),
     authecho.WithSkipper(authecho.NewSkipper()),
 ))
@@ -41,7 +44,8 @@ e.Use(authecho.MiddlewareJWT(
 // if we want to use the middleware for some routes
 // add this to the parameters of the route
 mJWT := authecho.MiddlewareJWT(
-    authecho.WithNoop(noop),
+    // if your jwks from a noop provider, noop always true
+    // authecho.WithNoop(noop),
     authecho.WithKeyFunc(jwks.Keyfunc),
     authecho.WithSkipper(authecho.NewSkipper()),
 )
@@ -51,13 +55,13 @@ mJWT := authecho.MiddlewareJWT(
 e.GET("/", func(c echo.Context) error {
     //...
 }, authecho.MiddlewareRole(
-        // skip the middleware if noop is true
-        authecho.WithNoopRole(noop),
+        // if your jwks from a noop provider, noop always true
+        // authecho.WithNoopRole(noop),
         authecho.WithRoles("transaction"),
     ),
     authecho.MiddlewareScope(
-        // skip the middleware if noop is true
-        authecho.WithNoopScope(noop),
+        // if your jwks from a noop provider, noop always true
+        // authecho.WithNoopRole(noop),
         authecho.WithScopes("email"),
     ),
 )
@@ -66,6 +70,8 @@ e.GET("/", func(c echo.Context) error {
 ## Options
 
 __WithNoop__ return a new noop function, it is useful when you want to disable the middleware for some routes.
+
+This is the same effect to set Active value in config to `noop`.
 
 ```go
 authecho.WithNoop(noop bool)

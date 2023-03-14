@@ -22,7 +22,7 @@ run: ## Run the application
 	@go run .
 
 keycloak: ## Run keycloak container
-	docker run -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:20.0.2 start-dev
+	docker run -it --rm -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:20.0.2 start-dev
 
 bin/swag-$(SWAG_VERSION):
 	@echo "> downloading swag@$(SWAG_VERSION)"

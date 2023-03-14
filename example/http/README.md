@@ -8,6 +8,8 @@ Run the server and before run docs to generate swagger documentation.
 make docs run-server
 ```
 
+Setting ENV=test or setting active="noop" can noop all middleware.
+
 Send a request to the server.
 
 ```sh

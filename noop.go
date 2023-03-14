@@ -8,6 +8,8 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
+const noopKey = "noop"
+
 type Noop struct{}
 
 func (Noop) ClientConfig() (*clientcredentials.Config, error) {
@@ -15,23 +17,23 @@ func (Noop) ClientConfig() (*clientcredentials.Config, error) {
 }
 
 func (Noop) GetCertURL() string {
-	return "noop"
+	return noopKey
 }
 
 func (Noop) GetTokenURL() string {
-	return "noop"
+	return noopKey
 }
 
 func (Noop) GetAuthURL() string {
-	return "noop"
+	return noopKey
 }
 
 func (Noop) GetClientID() string {
-	return "noop"
+	return noopKey
 }
 
 func (Noop) GetClientSecret() string {
-	return "noop"
+	return noopKey
 }
 
 func (Noop) JWTKeyFunc(ctx context.Context, opts ...OptionJWK) (InfJWTKeyFunc, error) {
@@ -49,7 +51,7 @@ func (Noop) RoundTripper(ctx context.Context, transport http.RoundTripper) (http
 type NoopJWTKey struct{}
 
 func (NoopJWTKey) Keyfunc(token *jwt.Token) (interface{}, error) {
-	return nil, nil
+	return noopKey, nil
 }
 
 func (NoopJWTKey) EndBackground() {}

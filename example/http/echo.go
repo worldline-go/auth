@@ -194,7 +194,7 @@ func echoServer(ctx context.Context) error {
 	)
 
 	// auth middleware
-	jwks, err := provider.JWTKeyFunc(ctx, auth.WithRefreshInterval(10*time.Second))
+	jwks, err := provider.JWTKeyFunc(ctx)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,6 @@ func echoServer(ctx context.Context) error {
 	defer jwks.EndBackground()
 
 	jwtMiddleware := authecho.MiddlewareJWT(
-		authecho.WithNoop(noop),
 		authecho.WithKeyFunc(jwks.Keyfunc),
 		authecho.WithSkipper(authecho.NewSkipper()),
 	)
@@ -219,8 +218,6 @@ func echoServer(ctx context.Context) error {
 	// restricted zone with role
 	e.POST("/value", api.PostValue,
 		jwtMiddleware, authecho.MiddlewareRole(
-			// don't check role if noop is true
-			authecho.WithNoopRole(noop),
 			authecho.WithRoles("projectX"),
 		),
 	)

@@ -74,12 +74,13 @@ if provider == nil {
 	return fmt.Errorf("no active provider")
 }
 
-keyFunc, err := provider.JWTKeyFunc(ctx)
+keyFunc, err := provider.JWTKeyFunc(auth.WithContext(ctx))
 if err != nil {
 	return fmt.Errorf("creating parser: %w", err)
 }
 
-defer keyFunc.EndBackground()
+// if you don't use the context cancelation, you can use this
+// defer keyFunc.EndBackground()
 
 // Check the token in the request
 claimsValue := claims.Custom{}

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 	"time"
 )
@@ -23,6 +24,7 @@ type optionsJWK struct {
 	refreshErrorHandler func(err error)
 	refreshInterval     time.Duration
 	refreshUnknownKID   bool
+	ctx                 context.Context
 }
 
 type OptionJWK func(options *optionsJWK)
@@ -52,5 +54,12 @@ func WithRefreshUnknownKID(v bool) OptionJWK {
 func WithClient(client *http.Client) OptionJWK {
 	return func(options *optionsJWK) {
 		options.client = client
+	}
+}
+
+// WithContext is used to set the context used to fetch the JWKs.
+func WithContext(ctx context.Context) OptionJWK {
+	return func(options *optionsJWK) {
+		options.ctx = ctx
 	}
 }

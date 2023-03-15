@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/rytsh/liz/utils/shutdown"
+	"github.com/worldline-go/auth"
 	"github.com/worldline-go/auth/claims"
 )
 
@@ -19,12 +20,13 @@ func httpServer(ctx context.Context) error {
 		return fmt.Errorf("no active provider")
 	}
 
-	keyFunc, err := provider.JWTKeyFunc(ctx)
+	keyFunc, err := provider.JWTKeyFunc(auth.WithContext(ctx))
 	if err != nil {
 		return fmt.Errorf("creating parser: %w", err)
 	}
 
-	defer keyFunc.EndBackground()
+	// use if context not set
+	// defer keyFunc.EndBackground()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

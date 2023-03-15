@@ -36,7 +36,7 @@ func (Noop) GetClientSecret() string {
 	return noopKey
 }
 
-func (Noop) JWTKeyFunc(ctx context.Context, opts ...OptionJWK) (InfJWTKeyFunc, error) {
+func (Noop) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
 	return NoopJWTKey{}, nil
 }
 
@@ -46,6 +46,12 @@ func (Noop) IsNoop() bool {
 
 func (Noop) RoundTripper(ctx context.Context, transport http.RoundTripper) (http.RoundTripper, error) {
 	return transport, nil
+}
+
+func (Noop) RoundTripperWrapper(_ *clientcredentials.Config) func(_ context.Context, transport http.RoundTripper) http.RoundTripper {
+	return func(_ context.Context, transport http.RoundTripper) http.RoundTripper {
+		return transport
+	}
 }
 
 type NoopJWTKey struct{}

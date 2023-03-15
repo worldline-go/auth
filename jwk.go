@@ -22,12 +22,13 @@ func (p *ProviderExtra) IsNoop() bool {
 // JWTKeyFunc returns a jwt.Keyfunc.
 //
 // Need GetCertURL in provider.
-func (p *ProviderExtra) JWTKeyFunc(ctx context.Context, opts ...OptionJWK) (InfJWTKeyFunc, error) {
+func (p *ProviderExtra) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
 	options := optionsJWK{
 		refreshErrorHandler: func(err error) {
 			log.Warn().Err(err).Msg("failed to refresh jwt.Keyfunc")
 		},
 		refreshInterval: time.Minute * 5,
+		ctx:             context.Background(),
 	}
 
 	for _, opt := range opts {
@@ -40,7 +41,7 @@ func (p *ProviderExtra) JWTKeyFunc(ctx context.Context, opts ...OptionJWK) (InfJ
 	}
 
 	keyOpts := keyfunc.Options{
-		Ctx:                 ctx,
+		Ctx:                 options.ctx,
 		RefreshErrorHandler: options.refreshErrorHandler,
 		// RefreshRateLimit:    time.Minute * 5,
 		RefreshInterval:   options.refreshInterval,

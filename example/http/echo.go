@@ -194,12 +194,13 @@ func echoServer(ctx context.Context) error {
 	)
 
 	// auth middleware
-	jwks, err := provider.JWTKeyFunc(ctx)
+	jwks, err := provider.JWTKeyFunc(auth.WithContext(ctx))
 	if err != nil {
 		return err
 	}
 
-	defer jwks.EndBackground()
+	// use if context not set
+	// defer jwks.EndBackground()
 
 	jwtMiddleware := authecho.MiddlewareJWT(
 		authecho.WithKeyFunc(jwks.Keyfunc),

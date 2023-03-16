@@ -9,8 +9,9 @@ func Info(version string, provider auth.InfProvider) error {
 	return swagger.SetInfo(
 		swagger.WithVersion(version),
 		swagger.WithCustom(map[string]interface{}{
-			"tokenUrl": provider.GetTokenURL(),
-			"authUrl":  provider.GetAuthURL(),
+			"tokenUrl":   provider.GetTokenURL(),
+			"authUrl":    provider.GetAuthURL(),
+			"refreshUrl": provider.GetTokenURL(),
 		}),
 	)
 }

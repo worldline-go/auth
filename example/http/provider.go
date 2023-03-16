@@ -7,8 +7,8 @@ import (
 
 var providerServer = auth.Provider{
 	Keycloak: &providers.KeyCloak{
-		BaseURL: "http://localhost:8080",
-		Realm:   "master",
+		BaseURL: "https://keycloak.test.igdcs.com/auth/",
+		Realm:   "finops",
 	},
 }
 

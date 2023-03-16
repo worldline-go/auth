@@ -46,6 +46,7 @@ func getOptions(opts ...Option) options {
 		}
 	}
 
+	options.config.TokenLookup = "header:Authorization:Bearer "
 	options.config.TokenLookupFuncs = []middleware.ValuesExtractor{
 		func(c echo.Context) ([]string, error) {
 			if v, ok := c.Get(authNoopKey).(bool); ok && v {

@@ -142,16 +142,19 @@ func (API) Ping(c echo.Context) error {
 // @in							header
 // @name						Authorization
 // @description				Description for what is this security definition being used
-
+//
 // @securitydefinitions.oauth2.application	OAuth2Application
 // @tokenUrl								[[ .Custom.tokenUrl ]]
-
+// @refreshUrl								[[ .Custom.refreshUrl ]]
+//
 // @securitydefinitions.oauth2.implicit	OAuth2Implicit
 // @authorizationUrl						[[ .Custom.authUrl ]]
-
+// @refreshUrl								[[ .Custom.refreshUrl ]]
+//
 // @securitydefinitions.oauth2.password	OAuth2Password
 // @tokenUrl								[[ .Custom.tokenUrl ]]
-
+// @refreshUrl								[[ .Custom.refreshUrl ]]
+//
 // @securitydefinitions.oauth2.accessCode	OAuth2AccessCode
 // @tokenUrl								[[ .Custom.tokenUrl ]]
 // @authorizationUrl						[[ .Custom.authUrl ]]
@@ -218,7 +221,8 @@ func echoServer(ctx context.Context) error {
 	e.GET("/scope/:scope", api.CheckMyScope, jwtMiddleware)
 	// restricted zone with role
 	e.POST("/value", api.PostValue,
-		jwtMiddleware, authecho.MiddlewareRole(
+		jwtMiddleware,
+		authecho.MiddlewareRole(
 			authecho.WithRoles("projectX"),
 		),
 	)

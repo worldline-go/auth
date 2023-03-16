@@ -145,15 +145,12 @@ func (API) Ping(c echo.Context) error {
 //
 // @securitydefinitions.oauth2.application	OAuth2Application
 // @tokenUrl								[[ .Custom.tokenUrl ]]
-// @refreshUrl								[[ .Custom.refreshUrl ]]
 //
 // @securitydefinitions.oauth2.implicit	OAuth2Implicit
 // @authorizationUrl						[[ .Custom.authUrl ]]
-// @refreshUrl								[[ .Custom.refreshUrl ]]
 //
 // @securitydefinitions.oauth2.password	OAuth2Password
 // @tokenUrl								[[ .Custom.tokenUrl ]]
-// @refreshUrl								[[ .Custom.refreshUrl ]]
 //
 // @securitydefinitions.oauth2.accessCode	OAuth2AccessCode
 // @tokenUrl								[[ .Custom.tokenUrl ]]

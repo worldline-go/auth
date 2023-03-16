@@ -6,6 +6,7 @@ import (
 )
 
 var providerServer = auth.Provider{
+	// Active: "noop",
 	Keycloak: &providers.KeyCloak{
 		BaseURL: "https://keycloak.test.igdcs.com/auth/",
 		Realm:   "finops",

@@ -50,6 +50,7 @@ func TestCustom_UnmarshalJSON(t *testing.T) {
 					"email":   {},
 					"profile": {},
 				},
+				ScopeStr: "email profile",
 				RoleSet: map[string]struct{}{
 					"offline_access":       {},
 					"default-roles-finops": {},
@@ -59,6 +60,7 @@ func TestCustom_UnmarshalJSON(t *testing.T) {
 					"manage-account-links": {},
 					"view-profile":         {},
 				},
+				RoleStr: "offline_access default-roles-finops uma_authorization uma_protection manage-account manage-account-links view-profile",
 				RegisteredClaims: jwt.RegisteredClaims{
 					ExpiresAt: jwt.NewNumericDate(time.Unix(1671493549, 0)),
 					IssuedAt:  jwt.NewNumericDate(time.Unix(1671493249, 0)),
@@ -66,6 +68,38 @@ func TestCustom_UnmarshalJSON(t *testing.T) {
 					Issuer:    "http://localhost:8080/realms/finops",
 					Audience:  jwt.ClaimStrings{"account"},
 					Subject:   "49e36c8e-1372-4191-81e4-9516fb439982",
+				},
+				MapClaims: jwt.MapClaims{
+					"acr":                "1",
+					"aud":                "account",
+					"azp":                "test",
+					"clientAddress":      "172.17.0.1",
+					"clientHost":         "172.17.0.1",
+					"clientId":           "test",
+					"email_verified":     false,
+					"exp":                1.671493549e+09,
+					"iat":                1.671493249e+09,
+					"iss":                "http://localhost:8080/realms/finops",
+					"jti":                "23587604-0d18-472e-80ee-124b179af77f",
+					"preferred_username": "service-account-test",
+					"realm_access": map[string]interface{}{
+						"roles": []interface{}{"offline_access", "default-roles-finops", "uma_authorization"},
+					},
+					"resource_access": map[string]interface{}{
+						"account": map[string]interface{}{
+							"roles": []interface{}{
+								"manage-account", "manage-account-links", "view-profile",
+							},
+						},
+						"test": map[string]interface{}{
+							"roles": []interface{}{
+								"uma_protection",
+							},
+						},
+					},
+					"scope": "email profile",
+					"sub":   "49e36c8e-1372-4191-81e4-9516fb439982",
+					"typ":   "Bearer",
 				},
 			},
 			args: args{

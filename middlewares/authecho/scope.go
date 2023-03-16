@@ -42,10 +42,16 @@ func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "claims not found")
 			}
 
+			found := false
 			for _, scope := range options.scopes {
-				if !claimsV.HasScope(scope) {
-					return echo.NewHTTPError(http.StatusUnauthorized, "scope not authorized")
+				if claimsV.HasScope(scope) {
+					found = true
+					break
 				}
+			}
+
+			if !found {
+				return echo.NewHTTPError(http.StatusUnauthorized, "scope not authorized")
 			}
 
 			return next(c)

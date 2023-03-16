@@ -77,6 +77,10 @@ func (c *Custom) UnmarshalJSON(b []byte) error {
 }
 
 func (c *Custom) HasRole(role string) bool {
+	if role == "" {
+		return true
+	}
+
 	if _, ok := c.RoleSet[role]; ok {
 		return true
 	}
@@ -85,6 +89,10 @@ func (c *Custom) HasRole(role string) bool {
 }
 
 func (c *Custom) HasScope(scope string) bool {
+	if scope == "" {
+		return true
+	}
+
 	if _, ok := c.ScopeSet[scope]; ok {
 		return true
 	}

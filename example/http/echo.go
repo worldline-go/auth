@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -159,10 +157,8 @@ func echoServer(ctx context.Context) error {
 	e := echo.New()
 	e.HideBanner = true
 
-	noop := strings.EqualFold(os.Getenv("ENV"), "test")
-
 	// if noop is true, it will return a fake provider
-	provider := providerServer.ActiveProvider(auth.WithNoop(noop))
+	provider := providerServer.ActiveProvider()
 	if provider == nil {
 		return fmt.Errorf("no authentication provider found")
 	}
@@ -220,7 +216,7 @@ func echoServer(ctx context.Context) error {
 	e.POST("/value", api.PostValue,
 		jwtMiddleware,
 		authecho.MiddlewareRole(
-			authecho.WithRoles("projectX"),
+			authecho.WithRoles(""),
 		),
 	)
 

@@ -22,6 +22,9 @@ func (p *ProviderExtra) IsNoop() bool {
 // JWTKeyFunc returns a jwt.Keyfunc.
 //
 // Need GetCertURL in provider.
+//
+// If introspect is true, the introspect endpoint is used to verify the token.
+// Use Parser function for introspect, not keyfunc.
 func (p *ProviderExtra) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
 	options := optionsJWK{
 		refreshErrorHandler: func(err error) {
@@ -35,7 +38,7 @@ func (p *ProviderExtra) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
 		opt(&options)
 	}
 
-	if p.GetIntrospectURL() != "" {
+	if options.introspect {
 		return &IntrospectJWTKey{
 			URL:          p.GetIntrospectURL(),
 			ClientID:     p.GetClientID(),

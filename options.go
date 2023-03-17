@@ -25,9 +25,16 @@ type optionsJWK struct {
 	refreshInterval     time.Duration
 	refreshUnknownKID   bool
 	ctx                 context.Context
+	introspect          bool
 }
 
 type OptionJWK func(options *optionsJWK)
+
+func WithIntrospect(v bool) OptionJWK {
+	return func(options *optionsJWK) {
+		options.introspect = v
+	}
+}
 
 // WithRefreshErrorHandler sets the refresh error handler for the jwt.Key.
 func WithRefreshErrorHandler(fn func(err error)) OptionJWK {

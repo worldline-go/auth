@@ -26,8 +26,6 @@ type Generic struct {
 	CertURL string `cfg:"cert_url"`
 
 	// IntrospectURL is the check the active or not with request.
-	//
-	// If set, certURL will be ignored.
 	IntrospectURL string `cfg:"introspect_url"`
 
 	// AuthURL is the resource server's authorization endpoint

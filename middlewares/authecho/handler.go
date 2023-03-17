@@ -105,6 +105,10 @@ func getOptions(opts ...Option) options {
 				return nil, fmt.Errorf("invalid auth")
 			}
 
+			if options.parser == nil {
+				return nil, fmt.Errorf("parser function not set")
+			}
+
 			return options.parser(tokenStr, options.config.NewClaimsFunc(c))
 		}
 	}

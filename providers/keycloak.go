@@ -27,6 +27,9 @@ type KeyCloak struct {
 	// BaseURL and REALM are used to construct the CertURL.
 	CertURL string `cfg:"cert_url"`
 
+	// IntrospectURL is the check the active or not with request.
+	IntrospectURL string `cfg:"introspect_url"`
+
 	// AuthURL is the resource server's authorization endpoint
 	// use for redirection to login page.
 	//
@@ -48,7 +51,7 @@ type KeyCloak struct {
 }
 
 func (p *KeyCloak) GetIntrospectURL() string {
-	return ""
+	return p.IntrospectURL
 }
 
 func (p *KeyCloak) GetScopes() []string {

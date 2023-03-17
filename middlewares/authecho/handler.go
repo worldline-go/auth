@@ -1,11 +1,13 @@
 package authecho
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -20,51 +22,14 @@ import (
 )
 
 const (
-	noopKey     = "noop"
-	authNoopKey = "auth_noop"
+	authNoopKey       = "auth_noop"
+	authIntrospectKey = "auth_introspect"
 )
 
 func getOptions(opts ...Option) options {
 	var options options
 	for _, opt := range opts {
 		opt(&options)
-	}
-
-	// is it noop?
-	noop := options.noop
-	if !noop {
-		if options.config.KeyFunc != nil {
-			if v, _ := options.config.KeyFunc(&jwt.Token{}); v == noopKey {
-				noop = true
-			}
-		}
-	}
-
-	options.config.BeforeFunc = func(c echo.Context) {
-		if noop {
-			c.Set(authNoopKey, true)
-		}
-	}
-
-	options.config.TokenLookup = "header:Authorization:Bearer "
-	options.config.TokenLookupFuncs = []middleware.ValuesExtractor{
-		func(c echo.Context) ([]string, error) {
-			if v, ok := c.Get(authNoopKey).(bool); ok && v {
-				return []string{noopKey}, nil
-			}
-
-			return nil, fmt.Errorf("skip")
-		},
-	}
-
-	if noop {
-		options.config.ParseTokenFunc = func(c echo.Context, auth string) (interface{}, error) {
-			if v, ok := c.Get(authNoopKey).(bool); ok && v {
-				return noopKey, nil
-			}
-
-			return nil, fmt.Errorf("invalid auth")
-		}
 	}
 
 	if options.config.NewClaimsFunc == nil {
@@ -86,6 +51,61 @@ func getOptions(opts ...Option) options {
 	options.config.SuccessHandler = func(c echo.Context) {
 		if options.claimsHeader != nil {
 			options.claimsHeader.SetHeaders(c)
+		}
+	}
+
+	// is it noop?
+	noop := options.noop
+	introspect := false
+
+	if options.config.KeyFunc != nil {
+		v, _ := options.config.KeyFunc(&jwt.Token{})
+		switch v {
+		case auth.NoopKey:
+			options.noop = true
+			noop = true
+		case auth.IntrospectKey:
+			introspect = true
+		}
+	}
+
+	options.config.BeforeFunc = func(c echo.Context) {
+		if noop {
+			c.Set(authNoopKey, true)
+		}
+
+		if introspect {
+			c.Set(authIntrospectKey, true)
+		}
+	}
+
+	options.config.TokenLookup = "header:Authorization:Bearer "
+	if noop {
+		options.config.TokenLookupFuncs = []middleware.ValuesExtractor{
+			func(c echo.Context) ([]string, error) {
+				if v, ok := c.Get(authNoopKey).(bool); ok && v {
+					return []string{auth.NoopKey}, nil
+				}
+
+				return nil, fmt.Errorf("skip")
+			},
+		}
+		options.config.ParseTokenFunc = func(c echo.Context, tokenStr string) (interface{}, error) {
+			if v, ok := c.Get(authNoopKey).(bool); ok && v {
+				return auth.NoopKey, nil
+			}
+
+			return nil, fmt.Errorf("invalid auth")
+		}
+	}
+
+	if introspect {
+		options.config.ParseTokenFunc = func(c echo.Context, tokenStr string) (interface{}, error) {
+			if v, _ := c.Get(authIntrospectKey).(bool); !v {
+				return nil, fmt.Errorf("invalid auth")
+			}
+
+			return options.parser(tokenStr, options.config.NewClaimsFunc(c))
 		}
 	}
 
@@ -158,12 +178,14 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 				// check user-agent not a browser
 				if options.redirect.CheckAgent && !strings.Contains(c.Request().UserAgent(), "Mozilla") {
 					// not a browser, return
+					c.Logger().Debugf("not a browser: %v", c.Request().UserAgent())
 					return next(c)
 				}
 
 				// check header Authorization is set
 				if c.Request().Header.Get("Authorization") != "" {
 					// header Authorization is set, no need to check cookie
+					c.Logger().Debug("header Authorization is set")
 					return next(c)
 				}
 
@@ -172,11 +194,13 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 					if v, err := sessionStore.Get(c.Request(), cookieName); !v.IsNew && err == nil {
 						// add the access token to the request
 						v64 = v.Values["cookie"].(string)
+						c.Logger().Debugf("found session: %v, %v", cookieName, v64)
 					}
 				} else {
 					if cookie, err := c.Cookie(cookieName); err == nil && cookie.Value != "" {
 						// add the access token to the request
 						v64 = cookie.Value
+						c.Logger().Debugf("found cookie: %v, %v", cookieName, v64)
 					}
 				}
 
@@ -201,6 +225,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 								c.Logger().Debugf("failed RefreshToken: %v", err)
 							} else {
 								cookieParsed = cookieParsedNew
+								c.Logger().Debug("token refreshed")
 							}
 						}
 					}
@@ -211,11 +236,14 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 						request.SetBearerAuth(c.Request(), cookieParsed.AccessToken)
 					}
 
+					c.Logger().Debug("success going to server")
+
 					return next(c)
 				}
 
 				if options.redirect.CheckValue != "" {
 					if c.Get(options.redirect.CheckValue) == nil {
+						c.Logger().Debugf("check value not set: %v", options.redirect.CheckValue)
 						return next(c)
 					}
 				}
@@ -239,6 +267,8 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 				// set back the query params
 				SetRedirectQueryParams(c, cookieName, options.redirect, sessionStore)
 
+				c.Logger().Debugf("success redirect to: %v", c.Request().URL.String())
+
 				// redirect to the callback but respose already committed
 				return c.Redirect(http.StatusTemporaryRedirect, c.Request().URL.String())
 			}
@@ -246,6 +276,11 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 
 		options.config.ErrorHandler = func(c echo.Context, err error) error {
 			errX := echo.NewHTTPError(http.StatusUnauthorized, "missing or malformed jwt").SetInternal(err)
+			// check error in jwt middleware
+			if errors.Is(err, keyfunc.ErrJWKAlgMismatch) || errors.Is(err, keyfunc.ErrKID) || errors.Is(err, keyfunc.ErrKIDNotFound) {
+				// return error
+				return errX
+			}
 
 			// check user-agent not a browser
 			if options.redirect.CheckAgent && !strings.Contains(c.Request().UserAgent(), "Mozilla") {
@@ -283,6 +318,9 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 			data.Add("state", "state_auth")
 			data.Add("redirect_uri", redirectURI)
 			data.Add("client_id", options.redirect.ClientID)
+			if options.redirect.Scopes != nil {
+				data.Add("scope", strings.Join(options.redirect.Scopes, " "))
+			}
 
 			redirect := options.redirect.AuthURL + "?" + data.Encode()
 

@@ -18,6 +18,8 @@ type InfProvider interface {
 	GetAuthURL() string
 	GetClientID() string
 	GetClientSecret() string
+	GetScopes() []string
+	GetIntrospectURL() string
 }
 
 type InfJWTKeyFunc interface {
@@ -41,6 +43,30 @@ type Provider struct {
 	// If set to "noop" the Noop provider is used.
 	Active   string              `cfg:"active"`
 	Keycloak *providers.KeyCloak `cfg:"keycloak"`
+	Generic  *providers.Generic  `cfg:"generic"`
+}
+
+const (
+	ProviderKeycloakKey = "keycloak"
+	ProviderGenericKey  = "generic"
+	ProviderNoopKey     = "noop"
+)
+
+func (p *Provider) providerGen(providerKey string) InfProviderExtra {
+	switch strings.ToLower(providerKey) {
+	case ProviderKeycloakKey:
+		return &ProviderExtra{
+			InfProvider: p.Keycloak,
+		}
+	case ProviderGenericKey:
+		return &ProviderExtra{
+			InfProvider: p.Generic,
+		}
+	case ProviderNoopKey:
+		return Noop{}
+	default:
+		return nil
+	}
 }
 
 // ActiveProvider returns the active provider or the first provider if none is active.
@@ -57,23 +83,16 @@ func (p *Provider) ActiveProvider(opts ...OptionActiveProvider) (ret InfProvider
 	}
 
 	if p.Active != "" {
-		switch strings.ToLower(p.Active) {
-		case "keycloak":
-			return &ProviderExtra{
-				InfProvider: p.Keycloak,
-			}
-		case "noop":
-			return Noop{}
-		default:
-			return nil
-		}
+		return p.providerGen(p.Active)
 	}
 
 	// select first non nil provider
 	if p.Keycloak != nil {
-		return &ProviderExtra{
-			InfProvider: p.Keycloak,
-		}
+		return p.providerGen(ProviderKeycloakKey)
+	}
+
+	if p.Generic != nil {
+		return p.providerGen(ProviderGenericKey)
 	}
 
 	return nil

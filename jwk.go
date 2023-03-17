@@ -35,6 +35,15 @@ func (p *ProviderExtra) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
 		opt(&options)
 	}
 
+	if p.GetIntrospectURL() != "" {
+		return &IntrospectJWTKey{
+			URL:          p.GetIntrospectURL(),
+			ClientID:     p.GetClientID(),
+			ClientSecret: p.GetClientSecret(),
+			Ctx:          options.ctx,
+		}, nil
+	}
+
 	certURL := p.GetCertURL()
 	if certURL == "" {
 		return nil, fmt.Errorf("no cert URL")

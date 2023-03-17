@@ -13,6 +13,7 @@ type options struct {
 
 	noop         bool
 	claimsHeader *ClaimsHeader
+	parser       func(tokenString string, claims jwt.Claims) (*jwt.Token, error)
 }
 
 type Option func(*options)
@@ -43,6 +44,12 @@ func WithClaims(newClaims func() jwt.Claims) Option {
 func WithKeyFunc(fn jwt.Keyfunc) Option {
 	return func(opts *options) {
 		opts.config.KeyFunc = fn
+	}
+}
+
+func WithParserFunc(fn func(tokenString string, claims jwt.Claims) (*jwt.Token, error)) Option {
+	return func(opts *options) {
+		opts.parser = fn
 	}
 }
 

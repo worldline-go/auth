@@ -5,16 +5,16 @@ go 1.17
 replace github.com/worldline-go/auth => ../..
 
 require (
+	github.com/MicahParks/keyfunc v1.9.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
 	github.com/labstack/echo-jwt/v4 v4.1.0
 	github.com/labstack/echo/v4 v4.10.2
-	github.com/worldline-go/auth v0.4.7
+	github.com/worldline-go/auth v0.4.8
 )
 
 require (
-	github.com/MicahParks/keyfunc v1.9.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect

@@ -17,6 +17,7 @@ func RefreshToken(c echo.Context, refreshToken, cookieName string, oldCookieValu
 			ClientID:     redirect.ClientID,
 			ClientSecret: redirect.ClientSecret,
 			TokenURL:     redirect.TokenURL,
+			Scopes:       redirect.Scopes,
 		},
 	})
 	if err != nil {
@@ -65,11 +66,14 @@ func CodeToken(c echo.Context, code, cookieName string, redirect *RedirectSettin
 			ClientSecret: redirect.ClientSecret,
 			TokenURL:     redirect.TokenURL,
 		},
+		NoClientIDParam: redirect.NoClientIDParam,
 	})
 	if err != nil {
 		c.Set("auth_error", err.Error())
 		return err
 	}
+
+	c.Logger().Debug("token body", string(body))
 
 	if redirect.UseSession {
 		if _, err := store.SetSessionB64(c.Request(), c.Response(), body, cookieName, "cookie", sessionStore); err != nil {

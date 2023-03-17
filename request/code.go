@@ -6,8 +6,9 @@ import (
 )
 
 type AuthorizationCodeConfig struct {
-	Code        string
-	RedirectURI string
+	Code            string
+	RedirectURI     string
+	NoClientIDParam bool
 
 	AuthRequestConfig
 }
@@ -20,7 +21,10 @@ func (a *Auth) AuthorizationCode(ctx context.Context, cfg AuthorizationCodeConfi
 		"grant_type":   {"authorization_code"},
 		"code":         {cfg.Code},
 		"redirect_uri": {cfg.RedirectURI},
-		"client_id":    {cfg.ClientID},
+	}
+
+	if !cfg.NoClientIDParam {
+		uValues.Add("client_id", cfg.ClientID)
 	}
 
 	return a.AuthRequest(ctx, uValues, cfg.AuthRequestConfig)

@@ -27,12 +27,11 @@ type AuthRequestConfig struct {
 	ClientSecret string
 	// AuthHeaderStyle is optional. If not set, AuthHeaderStyleBasic will be used.
 	AuthHeaderStyle AuthHeaderStyle
+	// Scopes for refresh and password flow.
+	Scopes []string
 }
 
 func (a *Auth) AuthRequest(ctx context.Context, uValues url.Values, cfg AuthRequestConfig) ([]byte, error) {
-	// set if style is params
-	AuthParams(cfg.ClientID, cfg.ClientSecret, uValues, cfg.AuthHeaderStyle)
-
 	encodedData := uValues.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, cfg.TokenURL, strings.NewReader(encodedData))
@@ -40,6 +39,8 @@ func (a *Auth) AuthRequest(ctx context.Context, uValues url.Values, cfg AuthRequ
 		return nil, err
 	}
 
+	// set if style is params
+	AuthParams(cfg.ClientID, cfg.ClientSecret, req, cfg.AuthHeaderStyle)
 	AuthHeader(req, cfg.ClientID, cfg.ClientSecret, cfg.AuthHeaderStyle)
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -54,6 +55,10 @@ func (a *Auth) RawRequest(ctx context.Context, req *http.Request) ([]byte, error
 		client = http.DefaultClient
 	}
 
+	return RawRequest(ctx, req, client)
+}
+
+func RawRequest(ctx context.Context, req *http.Request, client *http.Client) ([]byte, error) {
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, err

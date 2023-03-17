@@ -5,11 +5,14 @@ import (
 )
 
 type RedirectSetting struct {
-	AuthURL      string `cfg:"-"`
-	TokenURL     string `cfg:"-"`
-	ClientID     string `cfg:"-"`
-	ClientSecret string `cfg:"-"`
+	AuthURL      string   `cfg:"-"`
+	TokenURL     string   `cfg:"-"`
+	ClientID     string   `cfg:"-"`
+	ClientSecret string   `cfg:"-"`
+	Scopes       []string `cfg:"-"`
 
+	// NoClientIDParam is use to not add client_id in the query params.
+	NoClientIDParam bool `cfg:"no_client_id_param"`
 	// CookieName is the name of the cookie. Default is "auth_" + ClientID.
 	CookieName string `cfg:"cookie_name"`
 	// Callback is the callback URI.

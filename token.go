@@ -20,3 +20,14 @@ func IsRefreshNeed(accessToken string) (bool, error) {
 
 	return !claims.VerifyExpiresAt(time.Now().Add(DefaultExpireDuration), false), nil
 }
+
+func ParseUnverified(accessToken string) *jwt.MapClaims {
+	claims := jwt.MapClaims{}
+
+	_, _, err := jwt.NewParser().ParseUnverified(accessToken, &claims)
+	if err != nil {
+		return nil
+	}
+
+	return &claims
+}

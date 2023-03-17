@@ -3,6 +3,7 @@ package request
 import (
 	"context"
 	"net/url"
+	"strings"
 )
 
 type RefreshTokenConfig struct {
@@ -19,6 +20,10 @@ func (a *Auth) RefreshToken(ctx context.Context, cfg RefreshTokenConfig) ([]byte
 		"grant_type":    {"refresh_token"},
 		"client_id":     {cfg.ClientID},
 		"refresh_token": {cfg.RefreshToken},
+	}
+
+	if cfg.Scopes != nil {
+		uValues.Add("scope", strings.Join(cfg.Scopes, " "))
 	}
 
 	return a.AuthRequest(ctx, uValues, cfg.AuthRequestConfig)

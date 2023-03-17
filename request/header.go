@@ -35,21 +35,20 @@ func AuthHeader(req *http.Request, clientID, clientSecret string, style AuthHead
 // AuthParams is a function to set Authorization params in url.Values.
 //
 // Style must be AuthHeaderStyleParams, otherwise it does nothing.
-func AuthParams(clientID, clientSecret string, uV url.Values, style AuthHeaderStyle) {
+func AuthParams(clientID, clientSecret string, req *http.Request, style AuthHeaderStyle) {
 	if style != AuthHeaderStyleParams {
 		return
 	}
 
-	if uV == nil {
-		return
-	}
-
+	query := req.URL.Query()
 	if clientID != "" {
-		uV.Set("client_id", clientID)
+		query.Add("client_id", clientID)
 	}
 	if clientSecret != "" {
-		uV.Set("client_secret", clientSecret)
+		query.Add("client_secret", clientSecret)
 	}
+
+	req.URL.RawQuery = query.Encode()
 }
 
 // SetBearerAuth sets the Authorization header to use Bearer token.

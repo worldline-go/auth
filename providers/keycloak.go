@@ -47,6 +47,14 @@ type KeyCloak struct {
 	Realm string `cfg:"realm"`
 }
 
+func (p *KeyCloak) GetIntrospectURL() string {
+	return ""
+}
+
+func (p *KeyCloak) GetScopes() []string {
+	return p.Scopes
+}
+
 func (p *KeyCloak) GetCertURL() string {
 	_ = p.setCertURL()
 

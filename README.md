@@ -20,7 +20,7 @@ First set a provider.
 var providerClient = auth.Provider{
 	Keycloak: &providers.KeyCloak{
 		ClientID:     "test",
-		ClientSecret: "GbkxWi8ZBJvMv2Wsh03JbX183xKAPrEs",
+		ClientSecret: "my_client_secret",
         // Keycloak server url
 		BaseURL:      "http://localhost:8080",
 		Realm:        "finops",

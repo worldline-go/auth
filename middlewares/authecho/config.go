@@ -1,6 +1,8 @@
 package authecho
 
 import (
+	"net/http"
+
 	"github.com/worldline-go/auth/store"
 )
 
@@ -11,26 +13,31 @@ type RedirectSetting struct {
 	ClientSecret string   `cfg:"-"`
 	Scopes       []string `cfg:"-"`
 
-	// NoClientIDParam is use to not add client_id in the query params.
-	NoClientIDParam bool `cfg:"no_client_id_param"`
 	// CookieName is the name of the cookie. Default is "auth_" + ClientID.
 	CookieName string `cfg:"cookie_name"`
+	// MaxAge the number of seconds until the cookie expires.
+	MaxAge int `cfg:"max_age"`
+	// Path that must exist in the requested URL for the browser to send the Cookie header.
+	Path string `cfg:"path"`
+	// Domain for defines the host to which the cookie will be sent.
+	Domain string `cfg:"domain"`
+	// Secure to cookie only sent over HTTPS.
+	Secure bool `cfg:"secure"`
+	// SameSite for Lax 2, Strict 3, None 4.
+	SameSite http.SameSite `cfg:"same_site"`
+	// HttpOnly for true for not accessible by JavaScript.
+	HttpOnly bool `cfg:"http_only"`
+
+	// NoClientIDParam is use to not add client_id in the query params.
+	NoClientIDParam bool `cfg:"no_client_id_param"`
 	// Callback is the callback URI.
 	Callback string `cfg:"callback"`
-	// MaxAge for the cookie.
-	MaxAge int `cfg:"max_age"`
-	// Path for the cookie.
-	Path string `cfg:"path"`
-	// Domain for the cookie.
-	Domain string `cfg:"domain"`
 	// BaseURL is the base URL to use for the redirect.
 	// Default is the request Host with checking the X-Forwarded-Host header.
 	BaseURL string `cfg:"base_url"`
 	// Schema is the default schema to use for the redirect if no schema is provided.
 	// Default is the https schema.
 	Schema string `cfg:"schema"`
-	// Secure is the secure flag for the cookie.
-	Secure bool `cfg:"secure"`
 
 	// UseSession is use session instead of cookie.
 	UseSession bool `cfg:"use_session"`
@@ -48,9 +55,11 @@ type RedirectSetting struct {
 
 func (r *RedirectSetting) MapConfigCookie() store.Config {
 	return store.Config{
-		Domain: r.Domain,
-		Path:   r.Path,
-		MaxAge: r.MaxAge,
-		Secure: r.Secure,
+		Domain:   r.Domain,
+		Path:     r.Path,
+		MaxAge:   r.MaxAge,
+		Secure:   r.Secure,
+		SameSite: r.SameSite,
+		HttpOnly: r.HttpOnly,
 	}
 }

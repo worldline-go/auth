@@ -8,7 +8,7 @@ import (
 var providerServer = auth.Provider{
 	// Active: "noop",
 	Keycloak: &providers.KeyCloak{
-		BaseURL: "https://keycloak.test.igdcs.com/auth/",
+		BaseURL: "https://keycloak.mycompany.com/auth/",
 		Realm:   "finops",
 	},
 }
@@ -16,7 +16,7 @@ var providerServer = auth.Provider{
 var providerClient = auth.Provider{
 	Keycloak: &providers.KeyCloak{
 		ClientID:     "test",
-		ClientSecret: "GbkxWi8ZBJvMv2Wsh03JbX183xKAPrEs",
+		ClientSecret: "SECRET",
 		BaseURL:      "http://localhost:8080",
 		Realm:        "master",
 		Scopes:       []string{"openid", "profile", "email", "offline_access"},

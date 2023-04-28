@@ -159,10 +159,12 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 		// maxlength
 		sessionStore.MaxLength(1 << 20)
 		sessionStore.Options = &sessions.Options{
-			Path:   options.redirect.Path,
-			Domain: options.redirect.Domain,
-			MaxAge: options.redirect.MaxAge,
-			Secure: options.redirect.Secure,
+			Path:     options.redirect.Path,
+			Domain:   options.redirect.Domain,
+			MaxAge:   options.redirect.MaxAge,
+			Secure:   options.redirect.Secure,
+			HttpOnly: options.redirect.HttpOnly,
+			SameSite: options.redirect.SameSite,
 		}
 
 		// use as default token extractor

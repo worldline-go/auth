@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-test/deep"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func TestCustom_UnmarshalJSON(t *testing.T) {

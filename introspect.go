@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/worldline-go/auth/request"
 )
 

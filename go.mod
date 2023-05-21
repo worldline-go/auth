@@ -3,9 +3,9 @@ module github.com/worldline-go/auth
 go 1.17
 
 require (
-	github.com/MicahParks/keyfunc v1.9.0
+	github.com/MicahParks/keyfunc/v2 v2.0.3
 	github.com/go-test/deep v1.1.0
-	github.com/golang-jwt/jwt/v4 v4.4.2
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/gorilla/sessions v1.2.1
 	github.com/rs/zerolog v1.29.0
 	golang.org/x/oauth2 v0.3.0

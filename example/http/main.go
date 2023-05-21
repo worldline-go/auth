@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/rytsh/liz/utils/shutdown"
+	"github.com/rytsh/liz/shutdown"
 	"github.com/worldline-go/logz"
 )
 

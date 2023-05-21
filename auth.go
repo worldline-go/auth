@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/worldline-go/auth/providers"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -15,9 +15,13 @@ type InfProvider interface {
 
 	GetCertURL() string
 	GetTokenURL() string
+	GetTokenURLExternal() string
 	GetAuthURL() string
+	GetAuthURLExternal() string
 	GetClientID() string
+	GetClientIDExternal() string
 	GetClientSecret() string
+	GetClientSecretExternal() string
 	GetScopes() []string
 	GetIntrospectURL() string
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
-	"github.com/rytsh/liz/utils/shutdown"
+	"github.com/rytsh/liz/shutdown"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"github.com/worldline-go/auth"
 	"github.com/worldline-go/auth/claims"
@@ -141,15 +141,6 @@ func (API) Ping(c echo.Context) error {
 // @name						Authorization
 // @description				Description for what is this security definition being used
 //
-// @securitydefinitions.oauth2.application	OAuth2Application
-// @tokenUrl								[[ .Custom.tokenUrl ]]
-//
-// @securitydefinitions.oauth2.implicit	OAuth2Implicit
-// @authorizationUrl						[[ .Custom.authUrl ]]
-//
-// @securitydefinitions.oauth2.password	OAuth2Password
-// @tokenUrl								[[ .Custom.tokenUrl ]]
-//
 // @securitydefinitions.oauth2.accessCode	OAuth2AccessCode
 // @tokenUrl								[[ .Custom.tokenUrl ]]
 // @authorizationUrl						[[ .Custom.authUrl ]]
@@ -207,7 +198,11 @@ func echoServer(ctx context.Context) error {
 
 	// setup routes
 	e.GET("/ping", api.Ping)
-	e.GET("/swagger/*", echoSwagger.WrapHandler)
+	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(func(c *echoSwagger.Config) {
+		c.OAuth = &echoSwagger.OAuthConfig{
+			ClientId: provider.GetClientIDExternal(),
+		}
+	}))
 	// restricted zone
 	e.GET("/info", api.GetInfoClaim, jwtMiddleware)
 	e.GET("/role/:role", api.CheckMyRole, jwtMiddleware)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
@@ -32,7 +32,15 @@ func (Noop) GetTokenURL() string {
 	return NoopKey
 }
 
+func (Noop) GetTokenURLExternal() string {
+	return NoopKey
+}
+
 func (Noop) GetAuthURL() string {
+	return NoopKey
+}
+
+func (Noop) GetAuthURLExternal() string {
 	return NoopKey
 }
 
@@ -40,7 +48,15 @@ func (Noop) GetClientID() string {
 	return NoopKey
 }
 
+func (Noop) GetClientIDExternal() string {
+	return NoopKey
+}
+
 func (Noop) GetClientSecret() string {
+	return NoopKey
+}
+
+func (Noop) GetClientSecretExternal() string {
 	return NoopKey
 }
 

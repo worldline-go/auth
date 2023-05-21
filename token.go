@@ -3,7 +3,7 @@ package auth
 import (
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // DefaultExpireDuration is the default duration to check if the access token is about to expire.
@@ -18,7 +18,12 @@ func IsRefreshNeed(accessToken string) (bool, error) {
 		return false, err
 	}
 
-	return !claims.VerifyExpiresAt(time.Now().Add(DefaultExpireDuration), false), nil
+	v, err := claims.GetExpirationTime()
+	if err != nil {
+		return false, err
+	}
+
+	return v.Before(time.Now().Add(DefaultExpireDuration)), nil
 }
 
 func ParseUnverified(accessToken string) *jwt.MapClaims {

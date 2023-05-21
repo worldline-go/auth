@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/MicahParks/keyfunc"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"

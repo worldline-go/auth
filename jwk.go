@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/v2"
 	"github.com/rs/zerolog/log"
 )
 

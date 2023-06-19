@@ -42,16 +42,18 @@ func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "claims not found")
 			}
 
-			found := false
-			for _, role := range options.roles {
-				if claimsV.HasRole(role) {
-					found = true
-					break
+			if len(options.roles) != 0 {
+				found := false
+				for _, role := range options.roles {
+					if claimsV.HasRole(role) {
+						found = true
+						break
+					}
 				}
-			}
 
-			if !found {
-				return echo.NewHTTPError(http.StatusUnauthorized, "role not authorized")
+				if !found {
+					return echo.NewHTTPError(http.StatusUnauthorized, "role not authorized")
+				}
 			}
 
 			return next(c)

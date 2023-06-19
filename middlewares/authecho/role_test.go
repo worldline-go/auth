@@ -61,6 +61,21 @@ func TestMiddlewareRole(t *testing.T) {
 			want: 1,
 		},
 		{
+			name: "empty role map empty",
+			args: args{
+				opts: []OptionRole{
+					WithRoles(),
+				},
+			},
+			handler: HandlerFunc{},
+			claims: &claims.Custom{
+				RoleSet: map[string]struct{}{
+					"admin": {},
+				},
+			},
+			want: 1,
+		},
+		{
 			name: "role not in role map",
 			args: args{
 				opts: []OptionRole{

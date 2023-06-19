@@ -51,6 +51,23 @@ func TestMiddlewareScope(t *testing.T) {
 			want: 1,
 		},
 		{
+			name: "empty role map empty",
+			args: args{
+				opts: []OptionScope{
+					WithScopes(),
+				},
+			},
+			handler: HandlerFunc{},
+			claims: &claims.Custom{
+				ScopeSet: map[string]struct{}{
+					"admin":       {},
+					"account":     {},
+					"transaction": {},
+				},
+			},
+			want: 1,
+		},
+		{
 			name: "role not in role map",
 			args: args{
 				opts: []OptionScope{

@@ -92,7 +92,8 @@ func TestMiddlewareScope(t *testing.T) {
 			e := echo.New()
 			echoCtx := e.NewContext(nil, nil)
 			echoCtx.Set("claims", tt.claims)
-			fn(echoCtx)
+
+			_ = fn(echoCtx)
 
 			if tt.handler.Count != tt.want {
 				t.Errorf("MiddlewareRole() = %v, want %v", tt.handler.Count, tt.want)

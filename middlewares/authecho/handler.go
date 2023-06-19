@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"

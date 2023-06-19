@@ -5,7 +5,7 @@ go 1.17
 replace github.com/worldline-go/auth => ../..
 
 require (
-	github.com/MicahParks/keyfunc v1.9.0
+	github.com/MicahParks/keyfunc/v2 v2.0.3
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
@@ -15,9 +15,7 @@ require (
 )
 
 require (
-	github.com/MicahParks/keyfunc/v2 v2.0.3 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

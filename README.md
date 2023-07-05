@@ -97,4 +97,4 @@ When enabled redirection in the middleware, the user will be redirected to the o
 This is not a standard flow and we can change update it any time.  
 Code for echo middleware is [here](middlewares/authecho/README.md).
 
-![Redirection Flow](docs/redirection-flow.svg)
+![Redirection Flow](docs/assets/redirection-flow.svg)

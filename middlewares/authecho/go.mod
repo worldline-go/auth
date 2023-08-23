@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/labstack/echo/v4 v4.10.2
-	github.com/worldline-go/auth v0.5.0
+	github.com/worldline-go/auth v0.5.1
 )
 
 require (

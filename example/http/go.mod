@@ -13,7 +13,7 @@ require (
 	github.com/rytsh/liz/shutdown v0.1.0
 	github.com/swaggo/echo-swagger v1.3.5
 	github.com/swaggo/swag v1.8.12
-	github.com/worldline-go/auth v0.5.0
+	github.com/worldline-go/auth v0.5.1
 	github.com/worldline-go/auth/middlewares/authecho v0.0.0-00010101000000-000000000000
 	github.com/worldline-go/logz v0.3.3
 	github.com/worldline-go/logz/logecho v0.1.1

@@ -8,6 +8,15 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
+// Oauth2Transport wraps oauth2.Transport to suspend CancelRequest.
+type Oauth2Transport struct {
+	Transport oauth2.Transport
+}
+
+func (t *Oauth2Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return t.Transport.RoundTrip(req)
+}
+
 // RoundTripper returns a new RoundTripper that adds an OAuth2 Transport.
 //
 // Uses provider's ClientConfig.
@@ -17,17 +26,21 @@ func (p *ProviderExtra) RoundTripper(ctx context.Context, transport http.RoundTr
 		return nil, err
 	}
 
-	return &oauth2.Transport{
-		Source: oauth2.ReuseTokenSource(nil, cfg.TokenSource(ctx)),
-		Base:   transport,
+	return &Oauth2Transport{
+		Transport: oauth2.Transport{
+			Source: oauth2.ReuseTokenSource(nil, cfg.TokenSource(ctx)),
+			Base:   transport,
+		},
 	}, nil
 }
 
 func (p *ProviderExtra) RoundTripperWrapper(cfg *clientcredentials.Config) func(ctx context.Context, transport http.RoundTripper) http.RoundTripper {
 	return func(ctx context.Context, transport http.RoundTripper) http.RoundTripper {
-		return &oauth2.Transport{
-			Source: oauth2.ReuseTokenSource(nil, cfg.TokenSource(ctx)),
-			Base:   transport,
+		return &Oauth2Transport{
+			Transport: oauth2.Transport{
+				Source: oauth2.ReuseTokenSource(nil, cfg.TokenSource(ctx)),
+				Base:   transport,
+			},
 		}
 	}
 }

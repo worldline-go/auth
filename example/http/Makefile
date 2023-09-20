@@ -2,7 +2,7 @@ LOCAL_BIN_DIR := $(PWD)/bin
 
 ## golangci configuration
 GOLANGCI_CONFIG_URL   := https://raw.githubusercontent.com/worldline-go/guide/main/lint/.golangci.yml
-GOLANGCI_LINT_VERSION := v1.51.2
+GOLANGCI_LINT_VERSION := v1.54.2
 SWAG_VERSION := $(shell grep github.com/swaggo/swag go.mod | awk '{print $$2}')
 
 .DEFAULT_GOAL := help

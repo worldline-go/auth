@@ -6,58 +6,24 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/signal"
 	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/rytsh/liz/shutdown"
+	"github.com/worldline-go/initializer"
 	"github.com/worldline-go/logz"
 )
 
 func main() {
-	logz.InitializeLog(logz.WithCaller(false))
-
-	exitCode := 0
-	ctx, ctxCancel := context.WithCancel(context.Background())
-	wg := &sync.WaitGroup{}
-	defer func() {
-		wg.Wait()
-		// recover from panic if one occured to prevent os.Exit
-		if r := recover(); r != nil {
-			log.Panic().Msgf("%v", r)
-		}
-
-		os.Exit(exitCode)
-	}()
-
-	defer ctxCancel()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		chTerm := make(chan os.Signal, 1)
-		signal.Notify(chTerm, os.Interrupt)
-
-		select {
-		case <-ctx.Done():
-		case <-chTerm:
-			log.Warn().Msg("received shutdown signal")
-			exitCode = 1
-			ctxCancel()
-		}
-
-		shutdown.Global.Run()
-	}()
-
-	if err := run(ctx); err != nil {
-		log.Err(err).Msg("run failed")
-		exitCode = 1
-	}
+	initializer.Init(
+		run,
+		initializer.WithMsgf("Starting %s...", os.Getenv("ACTION")),
+		initializer.WithOptionsLogz(
+			logz.WithCaller(false),
+		))
 }
 
-func run(ctx context.Context) error {
+func run(ctx context.Context, _ *sync.WaitGroup) error {
 	var runFn func(context.Context) error
 
 	vAction := os.Getenv("ACTION")
@@ -101,12 +67,12 @@ func httpClient(ctx context.Context) error {
 		urlRequest = "http://localhost:3000"
 	}
 
-	req, err := http.NewRequest(http.MethodGet, urlRequest, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlRequest, nil)
 	if err != nil {
 		return fmt.Errorf("creating request: %w", err)
 	}
 
-	resp, err := client.Do(req.WithContext(context.Background()))
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("sending request: %w", err)
 	}

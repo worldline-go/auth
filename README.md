@@ -10,6 +10,10 @@ go get github.com/worldline-go/auth
 
 Check http example: [example/http](example/http)
 
+## Packages
+
+__-__ __echo middleware__ -> [pkg/authecho](pkg/authecho/README.md)
+
 ### Client
 
 Client is usefull to send request with oauth2 token.

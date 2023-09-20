@@ -6,7 +6,7 @@ Features are auto-redirection to login page, auto-refresh of access token.
 There are a few other middlewares in it that can help you to build a complete authentication system.
 
 ```sh
-go get github.com/worldline-go/auth/middlewares/authecho
+import "github.com/worldline-go/auth/pkg/authecho"
 ```
 
 ## Usage

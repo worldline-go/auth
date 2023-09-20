@@ -9,13 +9,12 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
-	"github.com/rytsh/liz/shutdown"
-	echoSwagger "github.com/swaggo/echo-swagger"
 	"github.com/worldline-go/auth"
 	"github.com/worldline-go/auth/claims"
 	"github.com/worldline-go/auth/example/http/docs"
-	_ "github.com/worldline-go/auth/example/http/docs"
-	"github.com/worldline-go/auth/middlewares/authecho"
+	"github.com/worldline-go/auth/pkg/authecho"
+	echoSwagger "github.com/worldline-go/echo-swagger"
+	"github.com/worldline-go/initializer"
 	"github.com/worldline-go/logz/logecho"
 	"github.com/ziflex/lecho/v3"
 )
@@ -216,12 +215,12 @@ func echoServer(ctx context.Context) error {
 	)
 
 	// Graceful shutdown
-	shutdown.Global.Add("echo-server", func() error {
+	initializer.Shutdown.Add(func() error {
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
 		return e.Shutdown(ctx)
-	})
+	}, initializer.WithShutdownName("echo-server"))
 
 	if err := e.Start(":3000"); err != nil && err != http.ErrServerClosed {
 		log.Err(err).Msg("shutting down the server")

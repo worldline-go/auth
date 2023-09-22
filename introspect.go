@@ -80,7 +80,7 @@ func (i IntrospectJWTKey) CheckIntrospect(token string) error {
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("accept", "application/json")
 
-	v, err := request.RawRequest(i.Ctx, req, client)
+	v, err := request.RawRequest(req, client)
 	if err != nil {
 		return err
 	}

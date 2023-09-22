@@ -22,7 +22,7 @@ func (a *Auth) RefreshToken(ctx context.Context, cfg RefreshTokenConfig) ([]byte
 		"refresh_token": {cfg.RefreshToken},
 	}
 
-	if cfg.Scopes != nil {
+	if len(cfg.Scopes) > 0 {
 		uValues.Add("scope", strings.Join(cfg.Scopes, " "))
 	}
 

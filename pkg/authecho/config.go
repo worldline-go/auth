@@ -28,8 +28,6 @@ type RedirectSetting struct {
 	// HttpOnly for true for not accessible by JavaScript.
 	HttpOnly bool `cfg:"http_only"`
 
-	// NoClientIDParam is use to not add client_id in the query params.
-	NoClientIDParam bool `cfg:"no_client_id_param"`
 	// Callback is the callback URI.
 	Callback string `cfg:"callback"`
 	// BaseURL is the base URL to use for the redirect.

@@ -60,13 +60,12 @@ func CodeToken(c echo.Context, code, cookieName string, redirect *RedirectSettin
 
 	body, err := request.DefaultAuth.AuthorizationCode(c.Request().Context(), request.AuthorizationCodeConfig{
 		Code:        code,
-		RedirectURI: redirectURI,
+		RedirectURL: redirectURI,
 		AuthRequestConfig: request.AuthRequestConfig{
 			ClientID:     redirect.ClientID,
 			ClientSecret: redirect.ClientSecret,
 			TokenURL:     redirect.TokenURL,
 		},
-		NoClientIDParam: redirect.NoClientIDParam,
 	})
 	if err != nil {
 		c.Set("auth_error", err.Error())

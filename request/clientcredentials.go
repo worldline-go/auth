@@ -3,11 +3,11 @@ package request
 import (
 	"context"
 	"net/url"
+	"strings"
 )
 
-type AuthorizationCodeConfig struct {
-	Code        string
-	RedirectURL string
+type ClientCredentialsConfig struct {
+	RefreshToken string
 
 	// EndpointParams specifies additional parameters for requests to the token endpoint.
 	EndpointParams url.Values
@@ -15,19 +15,16 @@ type AuthorizationCodeConfig struct {
 	AuthRequestConfig
 }
 
-// AuthorizationCode is a function to handle authorization code flow.
+// RefreshToken is a function to handle refresh token flow.
 //
 // Returns a byte array of the response body, if the response status code is 2xx.
-func (a *Auth) AuthorizationCode(ctx context.Context, cfg AuthorizationCodeConfig) ([]byte, error) {
+func (a *Auth) ClientCredentials(ctx context.Context, cfg ClientCredentialsConfig) ([]byte, error) {
 	uValues := url.Values{
-		"grant_type": {"authorization_code"},
-		"code":       {cfg.Code},
+		"grant_type": {"client_credentials"},
 	}
-
-	if cfg.RedirectURL != "" {
-		uValues.Set("redirect_uri", cfg.RedirectURL)
+	if len(cfg.Scopes) > 0 {
+		uValues.Set("scope", strings.Join(cfg.Scopes, " "))
 	}
-
 	for k, p := range cfg.EndpointParams {
 		uValues[k] = p
 	}

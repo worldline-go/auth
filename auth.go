@@ -77,7 +77,9 @@ func (p *Provider) providerGen(providerKey string) InfProviderExtra {
 //
 // Returns nil if no provider is configured.
 func (p *Provider) ActiveProvider(opts ...OptionActiveProvider) (ret InfProviderExtra) {
-	var o optionsActiveProvider
+	o := optionsActiveProvider{
+		active: p.Active,
+	}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -86,8 +88,8 @@ func (p *Provider) ActiveProvider(opts ...OptionActiveProvider) (ret InfProvider
 		return Noop{}
 	}
 
-	if p.Active != "" {
-		return p.providerGen(p.Active)
+	if o.active != "" {
+		return p.providerGen(o.active)
 	}
 
 	// select first non nil provider

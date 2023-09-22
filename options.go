@@ -7,7 +7,8 @@ import (
 )
 
 type optionsActiveProvider struct {
-	noop bool
+	noop   bool
+	active string
 }
 
 type OptionActiveProvider func(options *optionsActiveProvider)
@@ -16,6 +17,12 @@ type OptionActiveProvider func(options *optionsActiveProvider)
 func WithNoop(v bool) OptionActiveProvider {
 	return func(options *optionsActiveProvider) {
 		options.noop = v
+	}
+}
+
+func WithActive(provider string) OptionActiveProvider {
+	return func(options *optionsActiveProvider) {
+		options.active = provider
 	}
 }
 

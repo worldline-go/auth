@@ -46,28 +46,29 @@ func (a *Auth) AuthRequest(ctx context.Context, uValues url.Values, cfg AuthRequ
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("accept", "application/json")
 
-	return a.RawRequest(ctx, req)
+	return a.RawRequest(req)
 }
 
-func (a *Auth) RawRequest(ctx context.Context, req *http.Request) ([]byte, error) {
+func (a *Auth) RawRequest(req *http.Request) ([]byte, error) {
 	client := a.Client
 	if client == nil {
 		client = http.DefaultClient
 	}
 
-	return RawRequest(ctx, req, client)
+	return RawRequest(req, client)
 }
 
-func RawRequest(ctx context.Context, req *http.Request, client *http.Client) ([]byte, error) {
-	response, err := client.Do(req)
+func RawRequest(req *http.Request, client *http.Client) ([]byte, error) {
+	r, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	body, _ := io.ReadAll(response.Body)
-	response.Body.Close()
+	// 1MB limit
+	body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+	r.Body.Close()
 
-	if !(response.StatusCode >= 200 && response.StatusCode < 300) {
+	if code := r.StatusCode; code < 200 || code > 299 {
 		return nil, fmt.Errorf(string(body))
 	}
 

@@ -82,42 +82,41 @@ func TestProviderExtra_RoundTripper(t *testing.T) {
 	client := &http.Client{}
 
 	// wrap tansport with auth
-	got, err := p.RoundTripper(context.Background(), http.DefaultTransport)
+	got, err := p.NewOauth2Shared(context.Background())
+	// got, err := p.RoundTripper(context.Background(), http.DefaultTransport)
 	if err != nil {
-		t.Errorf("ProviderExtra.RoundTripper() error = %v", err)
-		return
+		t.Fatalf("ProviderExtra.RoundTripper() error = %v", err)
 	}
 
-	client.Transport = got
+	roundTripper, err := got.RoundTripper(nil, http.DefaultTransport)
+	if err != nil {
+		t.Fatalf("got.RoundTripper() error = %v", err)
+	}
+
+	client.Transport = roundTripper
 
 	req, err := http.NewRequest("GET", serverDestination.URL, nil)
 	if err != nil {
-		t.Errorf("http.NewRequest error = %v", err)
-		return
+		t.Fatalf("http.NewRequest error = %v", err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		t.Errorf("client.Do error = %v", err)
-		return
+		t.Fatalf("client.Do error = %v", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Status code = %v, want %v", resp.StatusCode, http.StatusOK)
-		return
+		t.Fatalf("Status code = %v, want %v", resp.StatusCode, http.StatusOK)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		t.Errorf("io.ReadAll error = %v", err)
-		return
+		t.Fatalf("io.ReadAll error = %v", err)
 	}
 
 	defer resp.Body.Close()
 
 	if string(body) != "Welcome!" {
-		t.Errorf("Body = %v, want %v", string(body), "Welcome!")
-		return
+		t.Fatalf("Body = %v, want %v", string(body), "Welcome!")
 	}
-
 }

@@ -17,6 +17,37 @@ func (t *Oauth2Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return t.Transport.RoundTrip(req)
 }
 
+type OAuth2Shared struct {
+	Source oauth2.TokenSource
+}
+
+// RoundTripper returns a new RoundTripper that adds an OAuth2 Transport.
+//
+// If Source is nil, returns transport as-is.
+func (o OAuth2Shared) RoundTripper(_ context.Context, transport http.RoundTripper) (http.RoundTripper, error) {
+	if o.Source == nil {
+		return transport, nil
+	}
+
+	return &Oauth2Transport{
+		Transport: oauth2.Transport{
+			Source: o.Source,
+			Base:   transport,
+		},
+	}, nil
+}
+
+func (p *ProviderExtra) NewOauth2Shared(ctx context.Context) (*OAuth2Shared, error) {
+	cfg, err := p.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return &OAuth2Shared{
+		Source: oauth2.ReuseTokenSource(nil, cfg.TokenSource(ctx)),
+	}, nil
+}
+
 // RoundTripper returns a new RoundTripper that adds an OAuth2 Transport.
 //
 // Uses provider's ClientConfig.

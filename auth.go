@@ -37,6 +37,7 @@ type InfProviderExtra interface {
 	// JWTKeyFunc returns the JWT key used to verify the token.
 	JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error)
 	IsNoop() bool
+	NewOauth2Shared(ctx context.Context) (*OAuth2Shared, error)
 	RoundTripper(ctx context.Context, transport http.RoundTripper) (http.RoundTripper, error)
 	RoundTripperWrapper(cfg *clientcredentials.Config) func(ctx context.Context, transport http.RoundTripper) http.RoundTripper
 }

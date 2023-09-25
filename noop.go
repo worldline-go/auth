@@ -60,7 +60,7 @@ func (Noop) GetClientSecretExternal() string {
 	return NoopKey
 }
 
-func (Noop) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
+func (Noop) JWTKeyFunc(_ ...OptionJWK) (InfJWTKeyFunc, error) {
 	return NoopJWTKey{}, nil
 }
 
@@ -68,7 +68,7 @@ func (Noop) IsNoop() bool {
 	return true
 }
 
-func (Noop) RoundTripper(ctx context.Context, transport http.RoundTripper) (http.RoundTripper, error) {
+func (Noop) RoundTripper(_ context.Context, transport http.RoundTripper) (http.RoundTripper, error) {
 	return transport, nil
 }
 
@@ -78,14 +78,18 @@ func (Noop) RoundTripperWrapper(_ *clientcredentials.Config) func(_ context.Cont
 	}
 }
 
+func (Noop) NewOauth2Shared(_ context.Context) (*OAuth2Shared, error) {
+	return &OAuth2Shared{}, nil
+}
+
 type NoopJWTKey struct{}
 
-func (NoopJWTKey) Keyfunc(token *jwt.Token) (interface{}, error) {
+func (NoopJWTKey) Keyfunc(_ *jwt.Token) (interface{}, error) {
 	return NoopKey, nil
 }
 
 func (NoopJWTKey) EndBackground() {}
 
-func (NoopJWTKey) Parser(tokenString string, claims jwt.Claims) (*jwt.Token, error) {
+func (NoopJWTKey) Parser(_ string, _ jwt.Claims) (*jwt.Token, error) {
 	return nil, nil
 }

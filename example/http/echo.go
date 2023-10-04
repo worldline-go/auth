@@ -38,7 +38,7 @@ func (API) GetInfoClaim(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "claims not found"})
 	}
 
-	return c.JSON(http.StatusOK, claims.MapClaims)
+	return c.JSONBlob(http.StatusOK, claims.Raw)
 }
 
 // CheckMyRole check if the user has the role

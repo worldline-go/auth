@@ -5,11 +5,16 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/worldline-go/auth/claims"
 )
 
+var DisableScopeCheckKey = "auth_disable_scope_check"
+
+type ClaimsScope interface {
+	HasScope(scope string) bool
+}
+
 // MiddlewareScope that checks the scope claim.
-// This middleware just work with *claims.Custom claims.
+// This middleware just work with ClaimsScope interface in claims.
 func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 	var options optionsScope
 	for _, opt := range opts {
@@ -27,6 +32,10 @@ func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 				return next(c)
 			}
 
+			if v, ok := c.Get(DisableScopeCheckKey).(bool); ok && v {
+				return next(c)
+			}
+
 			if v, ok := c.Get(authNoopKey).(bool); ok && v {
 				return next(c)
 			}
@@ -37,16 +46,17 @@ func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 				}
 			}
 
-			claimsV, ok := c.Get("claims").(*claims.Custom)
+			claimsV, ok := c.Get("claims").(ClaimsScope)
 			if !ok {
 				return echo.NewHTTPError(http.StatusUnauthorized, "claims not found")
 			}
 
-			if len(options.scopes) != 0 {
+			if len(options.scopes) > 0 {
 				found := false
 				for _, scope := range options.scopes {
 					if claimsV.HasScope(scope) {
 						found = true
+
 						break
 					}
 				}

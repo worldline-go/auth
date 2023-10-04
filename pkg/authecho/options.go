@@ -4,16 +4,16 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/worldline-go/auth/redirect"
 )
 
 type options struct {
 	config    echojwt.Config
 	newClaims func() jwt.Claims
-	redirect  *RedirectSetting
+	redirect  *redirect.Setting
 
-	noop         bool
-	claimsHeader *ClaimsHeader
-	parser       func(tokenString string, claims jwt.Claims) (*jwt.Token, error)
+	noop   bool
+	parser func(tokenString string, claims jwt.Claims) (*jwt.Token, error)
 }
 
 type Option func(*options)
@@ -59,14 +59,8 @@ func WithSkipper(skipper middleware.Skipper) Option {
 	}
 }
 
-func WithRedirect(redirect *RedirectSetting) Option {
+func WithRedirect(redirect *redirect.Setting) Option {
 	return func(opts *options) {
 		opts.redirect = redirect
-	}
-}
-
-func WithClaimsHeader(claimsHeader *ClaimsHeader) Option {
-	return func(opts *options) {
-		opts.claimsHeader = claimsHeader
 	}
 }

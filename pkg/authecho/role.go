@@ -5,11 +5,16 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/worldline-go/auth/claims"
 )
 
+var DisableRoleCheckKey = "auth_disable_role_check"
+
+type ClaimsRole interface {
+	HasRole(role string) bool
+}
+
 // MiddlewareRole that checks the role claim.
-// This middleware just work with *claims.Custom claims.
+// This middleware just work with ClaimsRole interface in claim.
 func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 	var options optionsRole
 	for _, opt := range opts {
@@ -27,6 +32,10 @@ func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 				return next(c)
 			}
 
+			if v, ok := c.Get(DisableRoleCheckKey).(bool); ok && v {
+				return next(c)
+			}
+
 			if v, ok := c.Get(authNoopKey).(bool); ok && v {
 				return next(c)
 			}
@@ -37,16 +46,17 @@ func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 				}
 			}
 
-			claimsV, ok := c.Get("claims").(*claims.Custom)
+			claimsV, ok := c.Get("claims").(ClaimsRole)
 			if !ok {
 				return echo.NewHTTPError(http.StatusUnauthorized, "claims not found")
 			}
 
-			if len(options.roles) != 0 {
+			if len(options.roles) > 0 {
 				found := false
 				for _, role := range options.roles {
 					if claimsV.HasRole(role) {
 						found = true
+
 						break
 					}
 				}

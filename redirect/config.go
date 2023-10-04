@@ -1,12 +1,13 @@
-package authecho
+package redirect
 
 import (
 	"net/http"
+	"regexp"
 
 	"github.com/worldline-go/auth/store"
 )
 
-type RedirectSetting struct {
+type Setting struct {
 	AuthURL      string   `cfg:"-"`
 	TokenURL     string   `cfg:"-"`
 	ClientID     string   `cfg:"-"`
@@ -30,6 +31,10 @@ type RedirectSetting struct {
 
 	// Callback is the callback URI.
 	Callback string `cfg:"callback"`
+	// CallbackSet for setting back original path.
+	CallbackSet bool `cfg:"callback_set"`
+	// CallbackModify for modify the callback URI, for multiple regex using the first match.
+	CallbackModify []RegexPath `cfg:"callback_modify"`
 	// BaseURL is the base URL to use for the redirect.
 	// Default is the request Host with checking the X-Forwarded-Host header.
 	BaseURL string `cfg:"base_url"`
@@ -49,9 +54,17 @@ type RedirectSetting struct {
 
 	CheckValue string `cfg:"check_value"`
 	CheckAgent bool   `cfg:"check_agent"`
+	// CheckAgentContains for check agent extra settings, default is related with implementation, usually is "Mozilla".
+	CheckAgentContains string `cfg:"check_agent_contains"`
 }
 
-func (r *RedirectSetting) MapConfigCookie() store.Config {
+type RegexPath struct {
+	Regex       string `cfg:"regex"`
+	Replacement string `cfg:"replacement"`
+	rgx         *regexp.Regexp
+}
+
+func (r *Setting) MapConfigCookie() store.Config {
 	return store.Config{
 		Domain:   r.Domain,
 		Path:     r.Path,

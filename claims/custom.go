@@ -7,6 +7,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Custom claims based on jwt.RegisteredClaims with additional Roles and Scope unmarshal.
+//
+// Embed this struct to your custom claims.
 type Custom struct {
 	// AuthorizedParty tells which client was used to create token.
 	AuthorizerParty string           `json:"azp,omitempty"`
@@ -14,15 +17,16 @@ type Custom struct {
 	Scope           string           `json:"scope,omitempty"`
 	RealmAccess     Roles            `json:"realm_access,omitempty"`
 	ResourceAccess  map[string]Roles `json:"resource_access,omitempty"`
+	// Roles usable for custom application.
+	Roles []string `json:"roles,omitempty"`
 
 	// custom maps for fast lookup
+
 	ScopeSet map[string]struct{} `json:"-"`
 	RoleSet  map[string]struct{} `json:"-"`
-	ScopeStr string              `json:"-"`
-	RoleStr  string              `json:"-"`
 
-	// load claims from jwt.MapClaims for debugging
-	MapClaims jwt.MapClaims `json:"-"`
+	// Raw claims
+	Raw []byte `json:"-"`
 
 	jwt.RegisteredClaims
 }
@@ -37,41 +41,33 @@ func (c *Custom) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if err := json.Unmarshal(b, &c.MapClaims); err != nil {
-		return err
-	}
+	c.Raw = b
+	c.ScopeSet = make(map[string]struct{})
+	c.RoleSet = make(map[string]struct{})
 
+	// set scope
 	if c.Scope != "" {
-		c.ScopeSet = make(map[string]struct{})
-		for _, s := range strings.Split(c.Scope, " ") {
+		for _, s := range strings.Fields(c.Scope) {
 			c.ScopeSet[s] = struct{}{}
 		}
-
-		c.ScopeStr = c.Scope
 	}
 
-	var roleBuilder strings.Builder
-
+	// set roles
 	if c.RealmAccess.Roles != nil {
-		c.RoleSet = make(map[string]struct{})
 		for _, r := range c.RealmAccess.Roles {
 			c.RoleSet[r] = struct{}{}
-			roleBuilder.WriteString(r)
-			roleBuilder.WriteString(" ")
 		}
 	}
-
 	if c.ResourceAccess != nil {
 		for _, r := range c.ResourceAccess {
 			for _, role := range r.Roles {
 				c.RoleSet[role] = struct{}{}
-				roleBuilder.WriteString(role)
-				roleBuilder.WriteString(" ")
 			}
 		}
 	}
-
-	c.RoleStr = strings.TrimSpace(roleBuilder.String())
+	for _, role := range c.Roles {
+		c.RoleSet[role] = struct{}{}
+	}
 
 	return nil
 }

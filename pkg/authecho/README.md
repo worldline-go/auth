@@ -6,7 +6,7 @@ Features are auto-redirection to login page, auto-refresh of access token.
 There are a few other middlewares in it that can help you to build a complete authentication system.
 
 ```sh
-import "github.com/worldline-go/auth/pkg/authecho"
+import "github.com/worldline-go/auth/middlewares/authecho"
 ```
 
 ## Usage
@@ -34,12 +34,12 @@ defer jwks.EndBackground()
 // echo part
 
 // if we want to use the middleware for all routes
-e.Use(authecho.MiddlewareJWT(
-    // if your jwks from a noop provider, noop always true
-    // authecho.WithNoop(noop),
-    authecho.WithKeyFunc(jwks.Keyfunc),
-    authecho.WithSkipper(authecho.NewSkipper()),
-))
+// e.Use(authecho.MiddlewareJWT(
+//     // if your jwks from a noop provider, noop always true
+//     // authecho.WithNoop(noop),
+//     authecho.WithKeyFunc(jwks.Keyfunc),
+//     authecho.WithSkipper(authecho.NewSkipper()),
+// ))
 
 // if we want to use the middleware for some routes
 // add this to the parameters of the route

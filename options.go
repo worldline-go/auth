@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"time"
+
+	"github.com/MicahParks/keyfunc/v2"
 )
 
 type optionsActiveProvider struct {
@@ -33,6 +35,8 @@ type optionsJWK struct {
 	refreshUnknownKID   bool
 	ctx                 context.Context
 	introspect          bool
+	givenKeys           map[string]keyfunc.GivenKey
+	givenKIDOverride    bool
 }
 
 type OptionJWK func(options *optionsJWK)
@@ -75,5 +79,17 @@ func WithClient(client *http.Client) OptionJWK {
 func WithContext(ctx context.Context) OptionJWK {
 	return func(options *optionsJWK) {
 		options.ctx = ctx
+	}
+}
+
+func WithGivenKeys(keys map[string]keyfunc.GivenKey) OptionJWK {
+	return func(options *optionsJWK) {
+		options.givenKeys = keys
+	}
+}
+
+func WithGivenKIDOverride(v bool) OptionJWK {
+	return func(options *optionsJWK) {
+		options.givenKIDOverride = v
 	}
 }

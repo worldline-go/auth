@@ -59,6 +59,8 @@ func (p *ProviderExtra) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
 		RefreshInterval:   options.refreshInterval,
 		RefreshUnknownKID: options.refreshUnknownKID,
 		Client:            options.client,
+		GivenKeys:         options.givenKeys,
+		GivenKIDOverride:  options.givenKIDOverride,
 	}
 
 	jwks, err := keyfunc.Get(certURL, keyOpts)

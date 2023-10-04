@@ -2,7 +2,7 @@ package docs
 
 import (
 	"github.com/worldline-go/auth"
-	"github.com/worldline-go/utility/swagger"
+	"github.com/worldline-go/swagger"
 )
 
 func Info(version string, provider auth.InfProvider) error {

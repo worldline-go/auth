@@ -13,7 +13,7 @@ require (
 	github.com/worldline-go/initializer v0.1.2
 	github.com/worldline-go/logz v0.4.0
 	github.com/worldline-go/logz/logecho v0.1.1
-	github.com/worldline-go/utility/swagger v0.1.0
+	github.com/worldline-go/swagger v1.0.0
 	github.com/ziflex/lecho/v3 v3.5.0
 )
 

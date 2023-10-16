@@ -14,6 +14,7 @@ type ClaimsRole interface {
 }
 
 // MiddlewareRole that checks the role claim.
+//
 // This middleware just work with ClaimsRole interface in claim.
 func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 	var options optionsRole
@@ -36,7 +37,7 @@ func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			if v, ok := c.Get(authNoopKey).(bool); ok && v {
+			if v, ok := c.Get(KeyAuthNoop).(bool); ok && v {
 				return next(c)
 			}
 
@@ -46,7 +47,7 @@ func MiddlewareRole(opts ...OptionRole) echo.MiddlewareFunc {
 				}
 			}
 
-			claimsV, ok := c.Get("claims").(ClaimsRole)
+			claimsV, ok := c.Get(KeyClaims).(ClaimsRole)
 			if !ok {
 				return echo.NewHTTPError(http.StatusUnauthorized, "claims not found")
 			}

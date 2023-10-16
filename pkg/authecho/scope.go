@@ -14,6 +14,7 @@ type ClaimsScope interface {
 }
 
 // MiddlewareScope that checks the scope claim.
+//
 // This middleware just work with ClaimsScope interface in claims.
 func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 	var options optionsScope
@@ -36,7 +37,7 @@ func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			if v, ok := c.Get(authNoopKey).(bool); ok && v {
+			if v, ok := c.Get(KeyAuthNoop).(bool); ok && v {
 				return next(c)
 			}
 
@@ -46,7 +47,7 @@ func MiddlewareScope(opts ...OptionScope) echo.MiddlewareFunc {
 				}
 			}
 
-			claimsV, ok := c.Get("claims").(ClaimsScope)
+			claimsV, ok := c.Get(KeyClaims).(ClaimsScope)
 			if !ok {
 				return echo.NewHTTPError(http.StatusUnauthorized, "claims not found")
 			}

@@ -1,12 +1,11 @@
 package auth
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/MicahParks/keyfunc/v2"
-	"github.com/rs/zerolog/log"
+	"github.com/worldline-go/auth/jwks"
+	"github.com/worldline-go/auth/models"
 )
 
 type ProviderExtra struct {
@@ -25,25 +24,15 @@ func (p *ProviderExtra) IsNoop() bool {
 //
 // If introspect is true, the introspect endpoint is used to verify the token.
 // Use Parser function for introspect, not keyfunc.
-func (p *ProviderExtra) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
-	options := optionsJWK{
-		refreshErrorHandler: func(err error) {
-			log.Warn().Err(err).Msg("failed to refresh jwt.Keyfunc")
-		},
-		refreshInterval: time.Minute * 5,
-		ctx:             context.Background(),
-	}
+func (p *ProviderExtra) JWTKeyFunc(opts ...jwks.OptionJWK) (models.InfKeyFuncParser, error) {
+	option := jwks.GetOptionJWK(opts...)
 
-	for _, opt := range opts {
-		opt(&options)
-	}
-
-	if options.introspect {
+	if option.Introspect {
 		return &IntrospectJWTKey{
 			URL:          p.GetIntrospectURL(),
 			ClientID:     p.GetClientID(),
 			ClientSecret: p.GetClientSecret(),
-			Ctx:          options.ctx,
+			Ctx:          option.Ctx,
 		}, nil
 	}
 
@@ -52,23 +41,13 @@ func (p *ProviderExtra) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
 		return nil, fmt.Errorf("no cert URL")
 	}
 
-	keyOpts := keyfunc.Options{
-		Ctx:                 options.ctx,
-		RefreshErrorHandler: options.refreshErrorHandler,
-		// RefreshRateLimit:    time.Minute * 5,
-		RefreshInterval:   options.refreshInterval,
-		RefreshUnknownKID: options.refreshUnknownKID,
-		Client:            options.client,
-		GivenKeys:         options.givenKeys,
-		GivenKIDOverride:  options.givenKIDOverride,
-	}
-
-	jwks, err := keyfunc.Get(certURL, keyOpts)
+	keyOpts := jwks.MapOptionKeyfunc(option)
+	jwksKeyFunc, err := keyfunc.Get(certURL, keyOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the JWKs from the given URL: %s; %w", certURL, err)
 	}
 
-	return &JWTKeyFunc{
-		JWKS: jwks,
+	return &jwks.KeyFuncParser{
+		KeyFunc: jwksKeyFunc.Keyfunc,
 	}, nil
 }

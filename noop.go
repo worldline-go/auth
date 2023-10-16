@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/MicahParks/keyfunc/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/worldline-go/auth/jwks"
+	"github.com/worldline-go/auth/models"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
@@ -62,20 +63,7 @@ func (Noop) GetClientSecretExternal() string {
 	return NoopKey
 }
 
-func (Noop) JWTKeyFunc(opts ...OptionJWK) (InfJWTKeyFunc, error) {
-	options := optionsJWK{}
-	for _, opt := range opts {
-		opt(&options)
-	}
-
-	if options.givenKeys != nil {
-		jwks := keyfunc.NewGiven(options.givenKeys)
-
-		return &JWTKeyFunc{
-			JWKS: jwks,
-		}, nil
-	}
-
+func (Noop) JWTKeyFunc(opts ...jwks.OptionJWK) (models.InfKeyFuncParser, error) {
 	return NoopJWTKey{}, nil
 }
 
@@ -105,7 +93,7 @@ func (NoopJWTKey) Keyfunc(_ *jwt.Token) (interface{}, error) {
 
 func (NoopJWTKey) EndBackground() {}
 
-func (n NoopJWTKey) Parser(tokenString string, claims jwt.Claims) (*jwt.Token, error) {
+func (n NoopJWTKey) ParseWithClaims(tokenString string, claims jwt.Claims) (*jwt.Token, error) {
 	token, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse the JWT: %w", err)

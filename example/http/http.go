@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/worldline-go/auth"
 	"github.com/worldline-go/auth/claims"
+	"github.com/worldline-go/auth/jwks"
 	"github.com/worldline-go/initializer"
 )
 
@@ -20,7 +20,7 @@ func httpServer(ctx context.Context) error {
 		return fmt.Errorf("no active provider")
 	}
 
-	keyFunc, err := provider.JWTKeyFunc(auth.WithContext(ctx))
+	keyFunc, err := provider.JWTKeyFunc(jwks.WithContext(ctx))
 	if err != nil {
 		return fmt.Errorf("creating parser: %w", err)
 	}
@@ -40,7 +40,7 @@ func httpServer(ctx context.Context) error {
 
 		// parse token
 		claimsValue := claims.Custom{}
-		token, err := keyFunc.Parser(authorization[7:], &claimsValue)
+		token, err := keyFunc.ParseWithClaims(authorization[7:], &claimsValue)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			log.Error().Err(err).Msg("parsing token")

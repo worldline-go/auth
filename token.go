@@ -4,10 +4,13 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/oauth2"
 )
 
 // DefaultExpireDuration is the default duration to check if the access token is about to expire.
 var DefaultExpireDuration = time.Second * 10
+
+type Token = oauth2.Token
 
 // IsRefreshNeed checks if the access token is about to expire.
 func IsRefreshNeed(accessToken string) (bool, error) {
@@ -24,15 +27,4 @@ func IsRefreshNeed(accessToken string) (bool, error) {
 	}
 
 	return v.Before(time.Now().Add(DefaultExpireDuration)), nil
-}
-
-func ParseUnverified(accessToken string) *jwt.MapClaims {
-	claims := jwt.MapClaims{}
-
-	_, _, err := jwt.NewParser().ParseUnverified(accessToken, &claims)
-	if err != nil {
-		return nil
-	}
-
-	return &claims
 }

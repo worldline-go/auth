@@ -23,15 +23,45 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v4"
 )
 
-const (
-	authNoopKey       = "auth_noop"
-	authIntrospectKey = "auth_introspect"
+var (
+	// KeyClaims hold parsed claims in the echo context.
+	//
+	// Default claims is *claims.Custom.
+	KeyClaims = "claims"
+	// KeyToken hold parsed *jwt.Token in the echo context.
+	//
+	// This is default key for echo-jwt's ContextKey if not set.
+	KeyToken = "token"
+	// KeySkipper is true if the jwt middleware skipped.
+	KeySkipper = "skipped"
+
+	// KeyAuthNoop hold true if the provider is noop.
+	KeyAuthNoop       = "auth_noop"
+	KeyAuthIntrospect = "auth_introspect"
 )
 
 func getOptions(opts ...Option) options {
 	var options options
 	for _, opt := range opts {
 		opt(&options)
+	}
+
+	// add default skipper key
+	if options.config.Skipper != nil {
+		skipper := options.config.Skipper
+
+		options.config.Skipper = func(c echo.Context) bool {
+			v := skipper(c)
+			if v {
+				c.Set(KeySkipper, true)
+			}
+
+			return v
+		}
+	}
+
+	if options.config.ContextKey == "" {
+		options.config.ContextKey = KeyToken
 	}
 
 	if options.config.NewClaimsFunc == nil {
@@ -44,7 +74,7 @@ func getOptions(opts ...Option) options {
 				value = options.newClaims()
 			}
 
-			c.Set("claims", value)
+			c.Set(KeyClaims, value)
 
 			return value
 		}
@@ -69,11 +99,11 @@ func getOptions(opts ...Option) options {
 
 	options.config.BeforeFunc = func(c echo.Context) {
 		if noop {
-			c.Set(authNoopKey, true)
+			c.Set(KeyAuthNoop, true)
 		}
 
 		if introspect {
-			c.Set(authIntrospectKey, true)
+			c.Set(KeyAuthIntrospect, true)
 		}
 	}
 
@@ -88,7 +118,7 @@ func getOptions(opts ...Option) options {
 		options.config.TokenLookup = "unset:unset"
 		options.config.TokenLookupFuncs = []middleware.ValuesExtractor{
 			func(c echo.Context) ([]string, error) {
-				if v, ok := c.Get(authNoopKey).(bool); ok && v {
+				if v, ok := c.Get(KeyAuthNoop).(bool); ok && v {
 					return []string{auth.NoopKey}, nil
 				}
 
@@ -102,7 +132,7 @@ func getOptions(opts ...Option) options {
 			token, _, err := jwtParser.ParseUnverified(tokenStr, options.config.NewClaimsFunc(c))
 			if err != nil {
 				// ignore error if noop
-				if v, ok := c.Get(authNoopKey).(bool); ok && v {
+				if v, ok := c.Get(KeyAuthNoop).(bool); ok && v {
 					return auth.NoopKey, nil
 				}
 
@@ -115,7 +145,7 @@ func getOptions(opts ...Option) options {
 
 	if introspect {
 		options.config.ParseTokenFunc = func(c echo.Context, tokenStr string) (interface{}, error) {
-			if v, _ := c.Get(authIntrospectKey).(bool); !v {
+			if v, _ := c.Get(KeyAuthIntrospect).(bool); !v {
 				return nil, fmt.Errorf("invalid auth")
 			}
 

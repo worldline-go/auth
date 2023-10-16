@@ -91,7 +91,7 @@ func TestMiddlewareScope(t *testing.T) {
 
 			e := echo.New()
 			echoCtx := e.NewContext(nil, nil)
-			echoCtx.Set("claims", tt.claims)
+			echoCtx.Set(KeyClaims, tt.claims)
 
 			_ = fn(echoCtx)
 

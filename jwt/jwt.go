@@ -1,21 +1,19 @@
 package jwt
 
 import (
-	"crypto/md5"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
+var defaultParser = jwt.NewParser()
+
 // New function get secret key and options and return a new JWT instance.
 //
-// Default signing method is jwt.SigningMethodHS256.
-//
 // Default expiration function is time.Now().Add(time.Hour).Unix().
-func New(secret []byte, opts ...Option) *JWT {
+func New(opts ...Option) (*JWT, error) {
 	o := option{
-		method: jwt.SigningMethodHS256,
 		expFunc: func() int64 {
 			return time.Now().Add(time.Hour).Unix()
 		},
@@ -26,21 +24,60 @@ func New(secret []byte, opts ...Option) *JWT {
 	}
 
 	if o.kid == "" {
-		// generate kid
-		md5Sum := md5.Sum(secret[len(secret)/2:]) //nolint:gosec // not using for security
-		o.kid = fmt.Sprintf("%x", md5Sum)
+		return nil, fmt.Errorf("kid is required")
+	}
+
+	if o.method == nil {
+		return nil, fmt.Errorf("method is required")
+	}
+
+	var secret interface{}
+	var public interface{}
+	switch o.method.(type) {
+	case *jwt.SigningMethodHMAC:
+		secret = o.secretByte
+		public = o.secretByte
+	case *jwt.SigningMethodRSAPSS:
+		secret = o.secretRSAPrivate
+		if o.secretRSAPublic != nil {
+			public = o.secretRSAPublic
+		} else {
+			public = o.secretRSAPrivate.Public()
+		}
+	case *jwt.SigningMethodRSA:
+		secret = o.secretRSAPrivate
+		if o.secretRSAPublic != nil {
+			public = o.secretRSAPublic
+		} else {
+			public = o.secretRSAPrivate.Public()
+		}
+	case *jwt.SigningMethodECDSA:
+		secret = o.secretECDSAPrivate
+		if o.secretECDSAPublic != nil {
+			public = o.secretECDSAPublic
+		} else {
+			public = o.secretECDSAPrivate.Public()
+		}
+	default:
+		return nil, fmt.Errorf("unsupported method")
+	}
+
+	if secret == nil || public == nil {
+		return nil, fmt.Errorf("secret and public key is required")
 	}
 
 	return &JWT{
 		secret:  secret,
+		public:  public,
 		method:  o.method,
 		expFunc: o.expFunc,
 		kid:     o.kid,
-	}
+	}, nil
 }
 
 type JWT struct {
-	secret  []byte
+	secret  interface{}
+	public  interface{}
 	method  jwt.SigningMethod
 	expFunc func() int64
 	kid     string
@@ -60,8 +97,13 @@ func (t *JWT) Generate(mapClaims map[string]interface{}, expDate int64) (string,
 	claims["exp"] = expDate
 
 	token := jwt.NewWithClaims(t.method, claims)
+
+	// header part
 	if t.kid != "" {
 		token.Header["kid"] = t.kid
+	}
+	if t.method.Alg() != "" {
+		token.Header["alg"] = t.method.Alg()
 	}
 
 	tokenString, err := token.SignedString(t.secret)
@@ -72,12 +114,13 @@ func (t *JWT) Generate(mapClaims map[string]interface{}, expDate int64) (string,
 	return tokenString, err
 }
 
-// Validate is validating and getting claims.
-func (t *JWT) Validate(tokenStr string) (map[string]interface{}, error) {
-	token, err := jwt.Parse(
+// Parse is validating and getting claims.
+func (t *JWT) Parse(tokenStr string, claims jwt.Claims) (*jwt.Token, error) {
+	token, err := jwt.ParseWithClaims(
 		tokenStr,
+		claims,
 		func(token *jwt.Token) (interface{}, error) {
-			return t.secret, nil
+			return t.public, nil
 		},
 		jwt.WithValidMethods([]string{t.method.Alg()}),
 	)
@@ -85,19 +128,19 @@ func (t *JWT) Validate(tokenStr string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("token validate: %w", err)
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, fmt.Errorf("invalid token: %w", err)
+	return token, nil
 }
 
 // Renew token with not changing claims.
 func (t *JWT) Renew(tokenStr string, expDate int64) (string, error) {
-	claims, err := t.Validate(tokenStr)
-	if err != nil {
+	claims := jwt.MapClaims{}
+	if _, err := t.Parse(tokenStr, &claims); err != nil {
 		return "", fmt.Errorf("renew: %w", err)
 	}
 
 	return t.Generate(claims, expDate)
+}
+
+func ParseUnverified(tokenString string, claims jwt.Claims) (*jwt.Token, []string, error) {
+	return defaultParser.ParseUnverified(tokenString, claims)
 }

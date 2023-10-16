@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/worldline-go/auth/models"
 	"github.com/worldline-go/auth/request"
 )
 
@@ -31,9 +32,7 @@ func (IntrospectJWTKey) Keyfunc(token *jwt.Token) (interface{}, error) {
 	return IntrospectKey, nil
 }
 
-func (IntrospectJWTKey) EndBackground() {}
-
-func (i IntrospectJWTKey) Parser(tokenString string, claims jwt.Claims) (*jwt.Token, error) {
+func (i IntrospectJWTKey) ParseWithClaims(tokenString string, claims jwt.Claims) (*jwt.Token, error) {
 	if i.URL == "" {
 		return nil, fmt.Errorf("no introspect URL")
 	}
@@ -91,7 +90,7 @@ func (i IntrospectJWTKey) CheckIntrospect(token string) error {
 	}
 
 	if !restIntrospect.Active {
-		return ErrTokenInvalid
+		return models.ErrTokenInvalid
 	}
 
 	return nil

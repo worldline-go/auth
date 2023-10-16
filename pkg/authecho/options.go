@@ -59,8 +59,8 @@ func WithSkipper(skipper middleware.Skipper) Option {
 	}
 }
 
-func WithRedirect(redirect *redirect.Setting) Option {
+func WithRedirect(redirectSetting *redirect.Setting) Option {
 	return func(opts *options) {
-		opts.redirect = redirect
+		opts.redirect = redirectSetting
 	}
 }

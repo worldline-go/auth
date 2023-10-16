@@ -9,9 +9,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
-	"github.com/worldline-go/auth"
 	"github.com/worldline-go/auth/claims"
 	"github.com/worldline-go/auth/example/http/docs"
+	"github.com/worldline-go/auth/jwks"
 	"github.com/worldline-go/auth/pkg/authecho"
 	echoSwagger "github.com/worldline-go/echo-swagger"
 	"github.com/worldline-go/initializer"
@@ -33,7 +33,7 @@ type API struct{}
 // @Router /info [get]
 // @Security ApiKeyAuth || OAuth2Application || OAuth2Implicit || OAuth2Password || OAuth2AccessCode
 func (API) GetInfoClaim(c echo.Context) error {
-	claims, ok := c.Get("claims").(*claims.Custom)
+	claims, ok := c.Get(authecho.KeyClaims).(*claims.Custom)
 	if !ok {
 		return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "claims not found"})
 	}
@@ -54,7 +54,7 @@ func (API) GetInfoClaim(c echo.Context) error {
 // @Router /role/{role} [get]
 // @Security ApiKeyAuth || OAuth2Application || OAuth2Implicit || OAuth2Password || OAuth2AccessCode
 func (API) CheckMyRole(c echo.Context) error {
-	claims, ok := c.Get("claims").(*claims.Custom)
+	claims, ok := c.Get(authecho.KeyClaims).(*claims.Custom)
 	if !ok {
 		return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "claims not found"})
 	}
@@ -80,7 +80,7 @@ func (API) CheckMyRole(c echo.Context) error {
 // @Router /role/{scope} [get]
 // @Security ApiKeyAuth || OAuth2Application || OAuth2Implicit || OAuth2Password || OAuth2AccessCode
 func (API) CheckMyScope(c echo.Context) error {
-	claims, ok := c.Get("claims").(*claims.Custom)
+	claims, ok := c.Get(authecho.KeyClaims).(*claims.Custom)
 	if !ok {
 		return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "claims not found"})
 	}
@@ -180,7 +180,7 @@ func echoServer(ctx context.Context) error {
 	)
 
 	// auth middleware
-	jwks, err := provider.JWTKeyFunc(auth.WithContext(ctx))
+	jwks, err := provider.JWTKeyFunc(jwks.WithContext(ctx))
 	if err != nil {
 		return err
 	}

@@ -56,6 +56,23 @@ type Generic struct {
 	//
 	// Default is TokenURL.
 	TokenURLExternal string `cfg:"token_url_external"`
+
+	LogoutURL string `cfg:"logout_url"`
+	// LogoutURLExternal for reaching the logout url from outside.
+	// Default is LogoutURL.
+	LogoutURLExternal string `cfg:"logout_url_external"`
+}
+
+func (p *Generic) GetLogoutURL() string {
+	return p.LogoutURL
+}
+
+func (p *Generic) GetLogoutURLExternal() string {
+	if p.LogoutURLExternal != "" {
+		return p.LogoutURLExternal
+	}
+
+	return p.LogoutURL
 }
 
 func (p *Generic) GetIntrospectURL() string {

@@ -43,6 +43,12 @@ func RefreshToken(ctx context.Context, r *http.Request, w http.ResponseWriter, r
 	// set the cookie
 	store.SetCookieB64(w, body, cookieName, redirect.MapConfigCookie())
 
+	if redirect.Information.Cookie.Name != "" {
+		if err := SaveInfo(r, w, cookieParsed.AccessToken, &redirect.Information); err != nil {
+			log.Debug().Err(err).Msgf("failed SaveInfo: %v", err)
+		}
+	}
+
 	return cookieParsed, nil
 }
 
@@ -66,6 +72,11 @@ func CodeToken(ctx context.Context, r *http.Request, w http.ResponseWriter, code
 		return err
 	}
 
+	cookieParsed, err := store.Parse(string(body))
+	if err != nil {
+		return err
+	}
+
 	// log.Debug().Msgf("token body: %s", string(body))
 
 	if redirect.UseSession {
@@ -78,6 +89,12 @@ func CodeToken(ctx context.Context, r *http.Request, w http.ResponseWriter, code
 
 	// set the cookie
 	store.SetCookieB64(w, body, cookieName, redirect.MapConfigCookie())
+
+	if redirect.Information.Cookie.Name != "" {
+		if err := SaveInfo(r, w, cookieParsed.AccessToken, &redirect.Information); err != nil {
+			log.Debug().Err(err).Msgf("failed SaveInfo: %v", err)
+		}
+	}
 
 	return nil
 }

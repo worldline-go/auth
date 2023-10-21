@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/worldline-go/auth/jwks"
 	"github.com/worldline-go/auth/models"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -14,6 +13,14 @@ import (
 const NoopKey = "noop"
 
 type Noop struct{}
+
+func (Noop) GetLogoutURL() string {
+	return NoopKey
+}
+
+func (Noop) GetLogoutURLExternal() string {
+	return NoopKey
+}
 
 func (Noop) GetIntrospectURL() string {
 	return NoopKey
@@ -63,7 +70,7 @@ func (Noop) GetClientSecretExternal() string {
 	return NoopKey
 }
 
-func (Noop) JWTKeyFunc(opts ...jwks.OptionJWK) (models.InfKeyFuncParser, error) {
+func (Noop) JWTKeyFunc(opts ...OptionJWK) (models.InfKeyFuncParser, error) {
 	return NoopJWTKey{}, nil
 }
 

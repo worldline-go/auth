@@ -9,9 +9,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
+	"github.com/worldline-go/auth"
 	"github.com/worldline-go/auth/claims"
 	"github.com/worldline-go/auth/example/http/docs"
-	"github.com/worldline-go/auth/jwks"
 	"github.com/worldline-go/auth/pkg/authecho"
 	echoSwagger "github.com/worldline-go/echo-swagger"
 	"github.com/worldline-go/initializer"
@@ -38,7 +38,7 @@ func (API) GetInfoClaim(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "claims not found"})
 	}
 
-	return c.JSONBlob(http.StatusOK, claims.Raw)
+	return c.JSONPretty(http.StatusOK, claims.Map, "  ")
 }
 
 // CheckMyRole check if the user has the role
@@ -180,7 +180,7 @@ func echoServer(ctx context.Context) error {
 	)
 
 	// auth middleware
-	jwks, err := provider.JWTKeyFunc(jwks.WithContext(ctx))
+	jwks, err := provider.JWTKeyFunc(auth.WithContext(ctx))
 	if err != nil {
 		return err
 	}

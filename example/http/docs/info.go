@@ -1,6 +1,8 @@
 package docs
 
 import (
+	_ "github.com/swaggo/swag"
+
 	"github.com/worldline-go/auth"
 	"github.com/worldline-go/swagger"
 )

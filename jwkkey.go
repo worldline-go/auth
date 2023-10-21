@@ -1,4 +1,4 @@
-package jwks
+package auth
 
 import (
 	"fmt"
@@ -7,11 +7,11 @@ import (
 	"github.com/worldline-go/auth/models"
 )
 
-type KeyFuncParser struct {
+type JwkKeyFuncParse struct {
 	KeyFunc func(token *jwt.Token) (interface{}, error)
 }
 
-func (j *KeyFuncParser) Keyfunc(token *jwt.Token) (interface{}, error) {
+func (j *JwkKeyFuncParse) Keyfunc(token *jwt.Token) (interface{}, error) {
 	if j.KeyFunc != nil {
 		return j.KeyFunc(token)
 	}
@@ -19,7 +19,7 @@ func (j *KeyFuncParser) Keyfunc(token *jwt.Token) (interface{}, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (j *KeyFuncParser) ParseWithClaims(tokenString string, claims jwt.Claims) (*jwt.Token, error) {
+func (j *JwkKeyFuncParse) ParseWithClaims(tokenString string, claims jwt.Claims) (*jwt.Token, error) {
 	// Parse the JWT.
 	token, err := jwt.ParseWithClaims(tokenString, claims, j.Keyfunc)
 	if err != nil {

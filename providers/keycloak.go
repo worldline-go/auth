@@ -69,8 +69,48 @@ type KeyCloak struct {
 	//
 	// Default is BaseURL.
 	BaseURLExternal string `cfg:"base_url_external"`
+
+	LogoutURL string `cfg:"logout_url"`
+	// LogoutURLExternal for reaching the logout url from outside.
+	// Default is LogoutURL.
+	LogoutURLExternal string `cfg:"logout_url_external"`
 	// Realm is the resource server's realm like master.
 	Realm string `cfg:"realm"`
+}
+
+func (p *KeyCloak) GetLogoutURL() string {
+	if p.LogoutURL != "" {
+		return p.LogoutURL
+	}
+
+	logoutURL, err := p.getLogoutURL(p.BaseURL, p.Realm)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get LogoutURL")
+		return ""
+	}
+
+	p.LogoutURL = logoutURL
+	return p.LogoutURL
+}
+
+func (p *KeyCloak) GetLogoutURLExternal() string {
+	if p.LogoutURLExternal != "" {
+		return p.LogoutURLExternal
+	}
+
+	baseURL := p.BaseURLExternal
+	if baseURL == "" {
+		baseURL = p.BaseURL
+	}
+
+	logoutURL, err := p.getLogoutURL(baseURL, p.Realm)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get LogoutURL external")
+		return ""
+	}
+
+	p.LogoutURLExternal = logoutURL
+	return p.LogoutURLExternal
 }
 
 func (p *KeyCloak) GetIntrospectURL() string {
@@ -186,6 +226,21 @@ func (p *KeyCloak) ClientConfig() (*clientcredentials.Config, error) {
 		Scopes:       p.Scopes,
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}, nil
+}
+
+func (p *KeyCloak) getLogoutURL(baseURL, realm string) (string, error) {
+	if baseURL == "" || realm == "" {
+		return "", fmt.Errorf("base_url and realm are required")
+	}
+
+	parsedURL, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("base_url is invalid: %s", err)
+	}
+
+	parsedURL.Path = path.Join(parsedURL.Path, "realms", realm, "protocol/openid-connect/logout")
+
+	return parsedURL.String(), nil
 }
 
 func (p *KeyCloak) getTokenURL(baseURL, realm string) (string, error) {

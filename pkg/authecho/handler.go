@@ -32,12 +32,23 @@ var (
 	//
 	// This is default key for echo-jwt's ContextKey if not set.
 	KeyToken = "token"
+	// KeyAccessToken hold the access token in the echo context.
+	KeyAccessToken = "access_token"
 	// KeySkipper is true if the jwt middleware skipped.
 	KeySkipper = "skipped"
 
 	// KeyAuthNoop hold true if the provider is noop.
 	KeyAuthNoop       = "auth_noop"
 	KeyAuthIntrospect = "auth_introspect"
+
+	// KeyAuthError internal error for code token get, str format.
+	KeyAuthError = "auth_error"
+
+	KeyClearCookieOnJWTKIDError = "clear_cookie_on_jwt_kid_error"
+	// KeyDisableRedirect is true if the redirection is disabled.
+	KeyDisableRedirect = "disable_redirect"
+	// KeyDisableRedirectWithCookie is true redirection disabled and removed cookie.
+	KeyDisableRedirectWithCookie = "disable_redirect_with_cookie"
 )
 
 func getOptions(opts ...Option) options {
@@ -180,11 +191,8 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 	functions := []echo.MiddlewareFunc{}
 
 	if !options.noop && options.redirect != nil {
-		if options.redirect.MaxAge == 0 {
-			options.redirect.MaxAge = 3600
-		}
-		if options.redirect.Path == "" {
-			options.redirect.Path = "/"
+		if options.redirect.CheckAgentContains == "" {
+			options.redirect.CheckAgentContains = "Mozilla"
 		}
 
 		cookieName := options.redirect.CookieName
@@ -214,7 +222,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 		// use as default token extractor
 		options.config.TokenLookupFuncs = []middleware.ValuesExtractor{
 			func(c echo.Context) ([]string, error) {
-				get, ok := c.Get("access_token").(string)
+				get, ok := c.Get(KeyAccessToken).(string)
 				if !ok {
 					return nil, fmt.Errorf("access_token not set")
 				}
@@ -225,6 +233,25 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 
 		functions = append(functions, func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
+				if options.redirect.Logout.Path != "" && c.Request().URL.Path == options.redirect.Logout.Path {
+					logoutURL, err := url.Parse(options.redirect.LogoutURL)
+					if err != nil {
+						return c.String(http.StatusFailedDependency, err.Error())
+					}
+
+					redirectURL := options.redirect.Logout.Redirect
+
+					query := logoutURL.Query()
+					query.Set("client_id", options.redirect.ClientID)
+					query.Set("post_logout_redirect_uri", redirectURL)
+					logoutURL.RawQuery = query.Encode()
+
+					// clear cookies
+					clearCookies(c.Request(), c.Response(), options.redirect, cookieName, sessionStore)
+					// redirect to logout page
+					return c.Redirect(http.StatusTemporaryRedirect, logoutURL.String())
+				}
+
 				// check user-agent not a browser
 				if options.redirect.CheckAgent && !strings.Contains(c.Request().UserAgent(), "Mozilla") {
 					// not a browser, return
@@ -241,6 +268,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 					return next(c)
 				}
 
+				// get token from cookie
 				v64 := ""
 				if options.redirect.UseSession {
 					if v, err := sessionStore.Get(c.Request(), cookieName); !v.IsNew && err == nil {
@@ -257,6 +285,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 				}
 
 				if v64 != "" {
+					c.Set(KeyClearCookieOnJWTKIDError, true)
 					// add the access token to the request
 					cookieParsed, err := store.Parse(v64, store.WithBase64(true))
 					if err != nil {
@@ -284,7 +313,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 						}
 					}
 
-					c.Set("access_token", cookieParsed.AccessToken)
+					c.Set(KeyAccessToken, cookieParsed.AccessToken)
 
 					if options.redirect.TokenHeader {
 						request.SetBearerAuth(c.Request(), cookieParsed.AccessToken)
@@ -295,13 +324,11 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 					return next(c)
 				}
 
-				// optional feature to skip check
-				if options.redirect.CheckValue != "" {
-					if c.Get(options.redirect.CheckValue) == nil {
-						c.Logger().Debugf("check value not set: %v", options.redirect.CheckValue)
-
-						return next(c)
-					}
+				// check header has special value to not redirect
+				if v, _ := c.Get(KeyDisableRedirect).(bool); v {
+					return next(c)
+				} else if v, _ := c.Get(KeyDisableRedirectWithCookie).(bool); v {
+					return next(c)
 				}
 
 				// get the token from the request
@@ -327,7 +354,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 				// remove code from query params to prevent goes to authentication call
 				redirect.RemoveAuthQueryParams(c.Request())
 				if err := redirect.CodeToken(c.Request().Context(), c.Request(), c.Response(), code, cookieName, options.redirect, sessionStore); err != nil {
-					c.Set("auth_error", err.Error())
+					c.Set(KeyAuthError, err.Error())
 					c.Logger().Errorf("failed CodeToken: %v", err)
 
 					return next(c)
@@ -353,36 +380,54 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 			errX := echo.NewHTTPError(http.StatusUnauthorized, "missing or malformed jwt").SetInternal(err)
 			// check error in jwt middleware
 			if errors.Is(err, keyfunc.ErrJWKAlgMismatch) || errors.Is(err, keyfunc.ErrKID) || errors.Is(err, keyfunc.ErrKIDNotFound) {
+				// clear cookie if it comes from our cookie
+				if v, _ := c.Get(KeyClearCookieOnJWTKIDError).(bool); v {
+					clearCookies(c.Request(), c.Response(), options.redirect, cookieName, sessionStore)
+				}
+
 				// return error
 				return errX
 			}
 
-			// check user-agent not a browser
-			agentContains := options.redirect.CheckAgentContains
-			if agentContains != "" {
-				agentContains = "Mozilla"
+			if options.redirect.RedirectMatch.Enabled {
+				// check regex match
+				ok, err := redirect.RegexCheck(c.Request(), &options.redirect.RedirectMatch)
+				if err != nil {
+					c.Logger().Errorf("failed RegexCheck: %v", err)
+				}
+
+				if !ok {
+					return echo.NewHTTPError(http.StatusProxyAuthRequired, errX.Error())
+				}
 			}
 
-			if options.redirect.CheckAgent && !strings.Contains(c.Request().UserAgent(), agentContains) {
+			// check header has special value to not redirect
+			if v, _ := c.Get(KeyDisableRedirect).(bool); v {
+				return errX
+			}
+
+			// check user-agent not a browser
+			if options.redirect.CheckAgent && !strings.Contains(c.Request().UserAgent(), options.redirect.CheckAgentContains) {
 				// not a browser, return error
 				return errX
 			}
 
-			if options.redirect.UseSession {
-				_ = store.RemoveSession(c.Request(), c.Response(), cookieName, sessionStore)
-			} else {
-				store.RemoveCookie(c.Response(), cookieName, options.redirect.MapConfigCookie())
+			// browser part
+
+			// clear cookies
+			clearCookies(c.Request(), c.Response(), options.redirect, cookieName, sessionStore)
+
+			// check header has special value to not redirect
+			if v, _ := c.Get(KeyDisableRedirectWithCookie).(bool); v {
+				return errX
 			}
 
-			if options.redirect.CheckValue != "" {
-				if c.Get(options.redirect.CheckValue) == nil {
-					return errX
-				}
-			}
-
-			if errS := c.Get("auth_error"); errS != nil {
+			// check if problem in authentication
+			if errS := c.Get(KeyAuthError); errS != nil {
 				return echo.NewHTTPError(http.StatusUnauthorized, errS.(string))
 			}
+
+			// try to login again
 
 			// to set back again after authentication complete
 			redirectValue, err := redirect.SaveRedirect(c.Request(), c.Response(), cookieName, options.redirect, sessionStore)
@@ -398,6 +443,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 			}
 
 			// redirect to login page
+			// https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
 			data := url.Values{}
 			data.Add("response_type", "code")
 			data.Add("state", redirectValue.State)
@@ -414,4 +460,17 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 	}
 
 	return append(functions, echojwt.WithConfig(options.config))
+}
+
+func clearCookies(r *http.Request, w http.ResponseWriter, redirectSetting *redirect.Setting, cookieName string, sessionStore store.SessionStore) {
+	// clear cookies
+	if redirectSetting.UseSession {
+		_ = store.RemoveSession(r, w, cookieName, sessionStore)
+	} else {
+		store.RemoveCookie(w, cookieName, redirectSetting.MapConfigCookie())
+	}
+
+	if redirectSetting.Information.Cookie.Name != "" {
+		store.RemoveCookie(w, redirectSetting.Information.Cookie.Name, redirectSetting.Information.Cookie.MapConfigCookie())
+	}
 }

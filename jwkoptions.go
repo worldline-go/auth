@@ -1,4 +1,4 @@
-package jwks
+package auth
 
 import (
 	"context"

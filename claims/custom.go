@@ -25,8 +25,8 @@ type Custom struct {
 	ScopeSet map[string]struct{} `json:"-"`
 	RoleSet  map[string]struct{} `json:"-"`
 
-	// Raw claims
-	Raw []byte `json:"-"`
+	// Map claims
+	Map map[string]interface{} `json:"-"`
 
 	jwt.RegisteredClaims
 }
@@ -41,7 +41,9 @@ func (c *Custom) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	c.Raw = b
+	if err := json.Unmarshal(b, &c.Map); err != nil {
+		return err
+	}
 	c.ScopeSet = make(map[string]struct{})
 	c.RoleSet = make(map[string]struct{})
 

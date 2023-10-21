@@ -1,4 +1,4 @@
-package jwks
+package auth
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 
 var ErrKIDNotFound = keyfunc.ErrKIDNotFound
 
-type InfProvider interface {
+type InfProviderCert interface {
 	GetCertURL() string
 	IsNoop() bool
 }
@@ -42,7 +42,7 @@ func (k *KeyFuncMulti) Keyfunc(token *jwt.Token) (interface{}, error) {
 // MultiJWTKeyFunc returns a jwt.Keyfunc with multiple keyfunc.
 //
 // Doesn't support introspect and noops, it will ignore them.
-func MultiJWTKeyFunc(providers []InfProvider, opts ...OptionJWK) (models.InfKeyFunc, error) {
+func MultiJWTKeyFunc(providers []InfProviderCert, opts ...OptionJWK) (models.InfKeyFunc, error) {
 	opt := GetOptionJWK(opts...)
 	keyFuncOpt := MapOptionKeyfunc(opt)
 
@@ -61,7 +61,7 @@ func MultiJWTKeyFunc(providers []InfProvider, opts ...OptionJWK) (models.InfKeyF
 	}
 
 	if len(multi) == 0 && opt.KeyFunc != nil {
-		return &KeyFuncParser{
+		return &JwkKeyFuncParse{
 			KeyFunc: opt.KeyFunc.Keyfunc,
 		}, nil
 	}
@@ -78,7 +78,7 @@ func MultiJWTKeyFunc(providers []InfProvider, opts ...OptionJWK) (models.InfKeyF
 
 	multiKeyFunc.multiJWKS = jwks
 
-	return &KeyFuncParser{
+	return &JwkKeyFuncParse{
 		KeyFunc: multiKeyFunc.Keyfunc,
 	}, nil
 }

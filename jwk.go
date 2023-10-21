@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/MicahParks/keyfunc/v2"
-	"github.com/worldline-go/auth/jwks"
 	"github.com/worldline-go/auth/models"
 )
 
@@ -24,8 +23,8 @@ func (p *ProviderExtra) IsNoop() bool {
 //
 // If introspect is true, the introspect endpoint is used to verify the token.
 // Use Parser function for introspect, not keyfunc.
-func (p *ProviderExtra) JWTKeyFunc(opts ...jwks.OptionJWK) (models.InfKeyFuncParser, error) {
-	option := jwks.GetOptionJWK(opts...)
+func (p *ProviderExtra) JWTKeyFunc(opts ...OptionJWK) (models.InfKeyFuncParser, error) {
+	option := GetOptionJWK(opts...)
 
 	if option.Introspect {
 		return &IntrospectJWTKey{
@@ -41,13 +40,13 @@ func (p *ProviderExtra) JWTKeyFunc(opts ...jwks.OptionJWK) (models.InfKeyFuncPar
 		return nil, fmt.Errorf("no cert URL")
 	}
 
-	keyOpts := jwks.MapOptionKeyfunc(option)
+	keyOpts := MapOptionKeyfunc(option)
 	jwksKeyFunc, err := keyfunc.Get(certURL, keyOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the JWKs from the given URL: %s; %w", certURL, err)
 	}
 
-	return &jwks.KeyFuncParser{
+	return &JwkKeyFuncParse{
 		KeyFunc: jwksKeyFunc.Keyfunc,
 	}, nil
 }

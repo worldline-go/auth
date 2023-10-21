@@ -10,6 +10,7 @@ import (
 type Setting struct {
 	AuthURL      string   `cfg:"-"`
 	TokenURL     string   `cfg:"-"`
+	LogoutURL    string   `cfg:"-"`
 	ClientID     string   `cfg:"-"`
 	ClientSecret string   `cfg:"-"`
 	Scopes       []string `cfg:"-"`
@@ -42,6 +43,8 @@ type Setting struct {
 	// Default is the https schema.
 	Schema string `cfg:"schema"`
 
+	RedirectMatch RedirectMatch `cfg:"redirect_match"`
+
 	// UseSession is use session instead of cookie.
 	UseSession bool `cfg:"use_session"`
 	// SessionKey secret key for session.
@@ -52,10 +55,66 @@ type Setting struct {
 	// RefreshToken is use to refresh the token.
 	RefreshToken bool `cfg:"refresh_token"`
 
-	CheckValue string `cfg:"check_value"`
-	CheckAgent bool   `cfg:"check_agent"`
+	CheckAgent bool `cfg:"check_agent"`
 	// CheckAgentContains for check agent extra settings, default is related with implementation, usually is "Mozilla".
 	CheckAgentContains string `cfg:"check_agent_contains"`
+
+	// Information is use to store some information about token.
+	Information Information `cfg:"information"`
+
+	Logout Logout `cfg:"logout"`
+}
+
+type Logout struct {
+	// Path is the path to logout, like "/logout".
+	Path string `cfg:"url"`
+	// Redirect is the redirect URL after logout.
+	Redirect string `cfg:"redirect"`
+}
+
+type Information struct {
+	// InformationCookie is use to store some information about token.
+	//  - CookieName required want to use this cookie.
+	//  - Store as json.
+	Cookie InformationCookie `cfg:"cookie"`
+}
+
+type InformationCookie struct {
+	// Name is the name of the cookie, required want to use this cookie.
+	Name     string        `cfg:"name"`
+	MaxAge   int           `cfg:"max_age"`
+	Path     string        `cfg:"path"`
+	Domain   string        `cfg:"domain"`
+	Secure   bool          `cfg:"secure"`
+	SameSite http.SameSite `cfg:"same_site"`
+	// HttpOnly for true for not accessible by JavaScript. Default is false.
+	HttpOnly bool `cfg:"http_only"`
+	// Map list to store in the cookie like "preferred_username", "given_name", "family_name", "sid", "azp", "aud"
+	Map []string `cfg:"values"`
+	// Custom map to store in the cookie.
+	Custom map[string]interface{} `cfg:"custom"`
+	// Roles to store in the cookie as []string.
+	Roles bool `cfg:"roles"`
+	// Scopes to store in the cookie as []string.
+	Scopes bool `cfg:"scopes"`
+}
+
+func (r *InformationCookie) MapConfigCookie() store.Config {
+	if r.MaxAge == 0 {
+		r.MaxAge = 3600
+	}
+	if r.Path == "" {
+		r.Path = "/"
+	}
+
+	return store.Config{
+		Domain:   r.Domain,
+		Path:     r.Path,
+		MaxAge:   r.MaxAge,
+		Secure:   r.Secure,
+		SameSite: r.SameSite,
+		HttpOnly: r.HttpOnly,
+	}
 }
 
 type RegexPath struct {
@@ -64,7 +123,27 @@ type RegexPath struct {
 	rgx         *regexp.Regexp
 }
 
+type RegexMatch struct {
+	Regex string `cfg:"regex"`
+	rgx   *regexp.Regexp
+}
+
+type RedirectMatch struct {
+	Enabled           bool              `cfg:"enabled"`
+	NoHeaderKeys      []string          `cfg:"header_keys"`
+	NoHeaderKeyValues map[string]string `cfg:"header_key_values"`
+	Regex             string            `cfg:"regex"`
+	rgx               *regexp.Regexp
+}
+
 func (r *Setting) MapConfigCookie() store.Config {
+	if r.MaxAge == 0 {
+		r.MaxAge = 3600
+	}
+	if r.Path == "" {
+		r.Path = "/"
+	}
+
 	return store.Config{
 		Domain:   r.Domain,
 		Path:     r.Path,

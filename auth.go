@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/worldline-go/auth/jwks"
 	"github.com/worldline-go/auth/models"
 	"github.com/worldline-go/auth/providers"
 	"golang.org/x/oauth2/clientcredentials"
@@ -25,12 +24,14 @@ type InfProvider interface {
 	GetClientSecretExternal() string
 	GetScopes() []string
 	GetIntrospectURL() string
+	GetLogoutURL() string
+	GetLogoutURLExternal() string
 }
 
 type InfProviderExtra interface {
 	InfProvider
 	// JWTKeyFunc returns the JWT key used to verify the token.
-	JWTKeyFunc(opts ...jwks.OptionJWK) (models.InfKeyFuncParser, error)
+	JWTKeyFunc(opts ...OptionJWK) (models.InfKeyFuncParser, error)
 	IsNoop() bool
 	NewOauth2Shared(ctx context.Context) (*OAuth2Shared, error)
 	RoundTripper(ctx context.Context, transport http.RoundTripper) (http.RoundTripper, error)

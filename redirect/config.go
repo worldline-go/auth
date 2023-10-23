@@ -62,6 +62,7 @@ type Setting struct {
 	// Information is use to store some information about token.
 	Information Information `cfg:"information"`
 
+	// Logout usable with "openid" scope.
 	Logout Logout `cfg:"logout"`
 }
 

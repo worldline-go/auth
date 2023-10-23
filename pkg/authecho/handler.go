@@ -191,6 +191,13 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 	functions := []echo.MiddlewareFunc{}
 
 	if !options.noop && options.redirect != nil {
+		if options.redirect.MaxAge == 0 {
+			options.redirect.MaxAge = 3600
+		}
+		if options.redirect.Path == "" {
+			options.redirect.Path = "/"
+		}
+
 		if options.redirect.CheckAgentContains == "" {
 			options.redirect.CheckAgentContains = "Mozilla"
 		}
@@ -242,7 +249,18 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 					redirectURL := options.redirect.Logout.Redirect
 
 					query := logoutURL.Query()
-					query.Set("client_id", options.redirect.ClientID)
+
+					v64 := getTokenFromCookie(c, cookieName, options.redirect, sessionStore)
+					if v64 != "" {
+						cookieParsed, err := store.Parse(v64, store.WithBase64(true))
+						if err != nil {
+							return c.String(http.StatusFailedDependency, err.Error())
+						}
+
+						query.Set("id_token_hint", cookieParsed.IDToken)
+					}
+
+					// query.Set("client_id", options.redirect.ClientID)
 					query.Set("post_logout_redirect_uri", redirectURL)
 					logoutURL.RawQuery = query.Encode()
 
@@ -269,20 +287,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 				}
 
 				// get token from cookie
-				v64 := ""
-				if options.redirect.UseSession {
-					if v, err := sessionStore.Get(c.Request(), cookieName); !v.IsNew && err == nil {
-						// add the access token to the request
-						v64, _ = v.Values["cookie"].(string)
-						// c.Logger().Debugf("found session: %v, %v", cookieName, v64)
-					}
-				} else {
-					if cookie, err := c.Cookie(cookieName); err == nil && cookie.Value != "" {
-						// add the access token to the request
-						v64 = cookie.Value
-						// c.Logger().Debugf("found cookie: %v, %v", cookieName, v64)
-					}
-				}
+				v64 := getTokenFromCookie(c, cookieName, options.redirect, sessionStore)
 
 				if v64 != "" {
 					c.Set(KeyClearCookieOnJWTKIDError, true)
@@ -473,4 +478,28 @@ func clearCookies(r *http.Request, w http.ResponseWriter, redirectSetting *redir
 	if redirectSetting.Information.Cookie.Name != "" {
 		store.RemoveCookie(w, redirectSetting.Information.Cookie.Name, redirectSetting.Information.Cookie.MapConfigCookie())
 	}
+}
+
+func getTokenFromCookie(c echo.Context, cookieName string, redirectSetting *redirect.Setting, sessionStore store.SessionStore) string {
+	if redirectSetting.UseSession {
+		if v, err := sessionStore.Get(c.Request(), cookieName); !v.IsNew && err == nil {
+			// add the access token to the request
+			v64, _ := v.Values["cookie"].(string)
+
+			// c.Logger().Debugf("found session: %v, %v", cookieName, v64)
+			return v64
+		}
+
+		return ""
+	}
+
+	if cookie, err := c.Cookie(cookieName); err == nil && cookie.Value != "" {
+		// add the access token to the request
+		v64 := cookie.Value
+		// c.Logger().Debugf("found cookie: %v, %v", cookieName, v64)
+
+		return v64
+	}
+
+	return ""
 }

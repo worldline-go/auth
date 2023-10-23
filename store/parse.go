@@ -14,6 +14,7 @@ type Token struct {
 	NotBeforePolicy  int    `json:"not-before-policy"`
 	SessionState     string `json:"session_state"`
 	Scope            string `json:"scope"`
+	IDToken          string `json:"id_token"`
 }
 
 func Parse(v string, opts ...OptionsParse) (*Token, error) {

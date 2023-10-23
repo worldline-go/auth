@@ -31,10 +31,15 @@ func RefreshToken(ctx context.Context, r *http.Request, w http.ResponseWriter, r
 		return nil, err
 	}
 
+	if redirect.Information.Cookie.Name != "" {
+		if err := SaveInfo(r, w, cookieParsed.AccessToken, &redirect.Information); err != nil {
+			log.Debug().Err(err).Msgf("failed SaveInfo: %v", err)
+		}
+	}
+
 	if redirect.UseSession {
 		if _, err := store.SetSessionB64(r, w, body, cookieName, "cookie", sessionStore); err != nil {
 			log.Debug().Err(err).Msg("error save session")
-			// c.Logger().Debug("error save session", err)
 		}
 
 		return cookieParsed, nil
@@ -42,12 +47,6 @@ func RefreshToken(ctx context.Context, r *http.Request, w http.ResponseWriter, r
 
 	// set the cookie
 	store.SetCookieB64(w, body, cookieName, redirect.MapConfigCookie())
-
-	if redirect.Information.Cookie.Name != "" {
-		if err := SaveInfo(r, w, cookieParsed.AccessToken, &redirect.Information); err != nil {
-			log.Debug().Err(err).Msgf("failed SaveInfo: %v", err)
-		}
-	}
 
 	return cookieParsed, nil
 }
@@ -66,6 +65,7 @@ func CodeToken(ctx context.Context, r *http.Request, w http.ResponseWriter, code
 			ClientID:     redirect.ClientID,
 			ClientSecret: redirect.ClientSecret,
 			TokenURL:     redirect.TokenURL,
+			Scopes:       redirect.Scopes,
 		},
 	})
 	if err != nil {
@@ -77,7 +77,11 @@ func CodeToken(ctx context.Context, r *http.Request, w http.ResponseWriter, code
 		return err
 	}
 
-	// log.Debug().Msgf("token body: %s", string(body))
+	if redirect.Information.Cookie.Name != "" {
+		if err := SaveInfo(r, w, cookieParsed.AccessToken, &redirect.Information); err != nil {
+			log.Debug().Err(err).Msgf("failed SaveInfo: %v", err)
+		}
+	}
 
 	if redirect.UseSession {
 		if _, err := store.SetSessionB64(r, w, body, cookieName, "cookie", sessionStore); err != nil {
@@ -89,12 +93,6 @@ func CodeToken(ctx context.Context, r *http.Request, w http.ResponseWriter, code
 
 	// set the cookie
 	store.SetCookieB64(w, body, cookieName, redirect.MapConfigCookie())
-
-	if redirect.Information.Cookie.Name != "" {
-		if err := SaveInfo(r, w, cookieParsed.AccessToken, &redirect.Information); err != nil {
-			log.Debug().Err(err).Msgf("failed SaveInfo: %v", err)
-		}
-	}
 
 	return nil
 }

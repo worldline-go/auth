@@ -18,21 +18,21 @@ func TestJWT_Generate(t *testing.T) {
 	}
 	tests := []struct {
 		name            string
-		fields          []Option
+		fields          []OptionJWT
 		args            args
 		wantValidateErr bool
 		wantErr         bool
 	}{
 		{
 			name:            "empty",
-			fields:          []Option{},
+			fields:          []OptionJWT{},
 			args:            args{},
 			wantValidateErr: false,
 			wantErr:         true,
 		},
 		{
 			name: "simple false",
-			fields: []Option{
+			fields: []OptionJWT{
 				WithSecretByte([]byte("pass1234")),
 				WithMethod(jwt.SigningMethodHS256),
 			},
@@ -42,7 +42,7 @@ func TestJWT_Generate(t *testing.T) {
 		},
 		{
 			name: "with 1 hour",
-			fields: []Option{
+			fields: []OptionJWT{
 				WithSecretByte([]byte("pass1234")),
 				WithMethod(jwt.SigningMethodHS256),
 			},
@@ -55,13 +55,13 @@ func TestJWT_Generate(t *testing.T) {
 		},
 		{
 			name: "rsa",
-			fields: func() []Option {
+			fields: func() []OptionJWT {
 				v, err := rsa.GenerateKey(rand.Reader, 2048)
 				if err != nil {
 					return nil
 				}
 
-				return []Option{
+				return []OptionJWT{
 					WithRSAPrivateKey(v),
 					WithMethod(jwt.SigningMethodRS256),
 				}
@@ -70,7 +70,7 @@ func TestJWT_Generate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tr, err := New(append(tt.fields, WithKID("test"))...)
+			tr, err := NewJWT(append(tt.fields, WithKID("test"))...)
 			if err != nil {
 				if tt.wantErr {
 					return

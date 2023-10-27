@@ -9,11 +9,11 @@ import (
 
 var defaultParser = jwt.NewParser()
 
-// New function get secret key and options and return a new JWT instance.
+// NewJWT function get secret key and options and return a new JWT instance.
 //
 // Default expiration function is time.Now().Add(time.Hour).Unix().
-func New(opts ...Option) (*JWT, error) {
-	o := option{
+func NewJWT(opts ...OptionJWT) (*JWT, error) {
+	o := optionJWT{
 		expFunc: func() int64 {
 			return time.Now().Add(time.Hour).Unix()
 		},

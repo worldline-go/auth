@@ -18,7 +18,7 @@ post_logout_redirect_uri: https://mywebsite.com/login
 client_id: my-client-id
 ```
 
-__id_token_hint__ is important and it is the `sid` in the token we see.
+__id_token_hint__ is important and it is the `id_token` but come with near to our access_token. And it is just getting if you add `openid` scope.
 
 Frontend UI shouldn't be know about the our token so we should use another middleware to handle our logout process.
 

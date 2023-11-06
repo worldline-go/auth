@@ -1,6 +1,6 @@
 module github.com/worldline-go/auth
 
-go 1.17
+go 1.18
 
 require (
 	github.com/MicahParks/keyfunc/v2 v2.0.3

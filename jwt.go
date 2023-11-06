@@ -94,7 +94,9 @@ func (t *JWT) Generate(mapClaims map[string]interface{}, expDate int64) (string,
 		claims[k] = mapClaims[k]
 	}
 
-	claims["exp"] = expDate
+	if expDate > 0 {
+		claims["exp"] = expDate
+	}
 
 	token := jwt.NewWithClaims(t.method, claims)
 

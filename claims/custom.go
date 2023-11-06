@@ -8,8 +8,6 @@ import (
 )
 
 // Custom claims based on jwt.RegisteredClaims with additional Roles and Scope unmarshal.
-//
-// Embed this struct to your custom claims.
 type Custom struct {
 	// AuthorizedParty tells which client was used to create token.
 	AuthorizerParty string           `json:"azp,omitempty"`

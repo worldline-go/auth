@@ -1,7 +1,6 @@
 package authecho
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -38,7 +37,6 @@ func MiddlewareControl[T any](fn func(c echo.Context, claim T) error, opts ...Op
 			if err := fn(c, claimsV); err != nil {
 				return err
 			}
-			fmt.Println("MiddlewareControl-2")
 
 			return next(c)
 		}

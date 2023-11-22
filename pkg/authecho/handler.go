@@ -214,7 +214,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 			sessionKey = securecookie.GenerateRandomKey(32)
 		}
 
-		sessionStore := sessions.NewFilesystemStore("", sessionKey)
+		sessionStore := sessions.NewFilesystemStore(options.redirect.SessionPath, sessionKey)
 		// maxlength
 		sessionStore.MaxLength(1 << 20)
 		sessionStore.Options = &sessions.Options{
@@ -224,6 +224,9 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 			Secure:   options.redirect.Secure,
 			HttpOnly: options.redirect.HttpOnly,
 			SameSite: options.redirect.SameSite,
+		}
+		if options.redirect.SessionStoreName != "" {
+			Store.AddSessionFilesystem(options.redirect.SessionStoreName, sessionStore)
 		}
 
 		// use as default token extractor

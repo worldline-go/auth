@@ -47,8 +47,13 @@ type Setting struct {
 
 	// UseSession is use session instead of cookie.
 	UseSession bool `cfg:"use_session"`
-	// SessionKey secret key for session.
+	// SessionKey secret key for session, if shared with other applications, use a static string, default is random.
 	SessionKey string `cfg:"session_key"`
+	// SessionPath is the path to store the session, os.TempDir() is the default.
+	SessionPath string `cfg:"session_path"`
+	// SessionStoreName is the name store for session.
+	// Use Store.GetSessionFilesystem to get the store.
+	SessionStoreName string `cfg:"session_store_name"`
 
 	// TokenHeader to add token to header.
 	TokenHeader bool `cfg:"token_header"`

@@ -69,6 +69,8 @@ type Setting struct {
 
 	// Logout usable with "openid" scope.
 	Logout Logout `cfg:"logout"`
+
+	Client *http.Client `cfg:"-"`
 }
 
 type Logout struct {

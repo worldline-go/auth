@@ -12,7 +12,11 @@ import (
 
 // RefreshToken refreshes the access token and set the cookie.
 func RefreshToken(ctx context.Context, r *http.Request, w http.ResponseWriter, refreshToken, cookieName string, oldCookieValue string, redirect *Setting, sessionStore *sessions.FilesystemStore) (*store.Token, error) {
-	body, err := request.DefaultAuth.RefreshToken(ctx, request.RefreshTokenConfig{
+	authClient := request.Auth{
+		Client: redirect.Client,
+	}
+
+	body, err := authClient.RefreshToken(ctx, request.RefreshTokenConfig{
 		RefreshToken: refreshToken,
 		AuthRequestConfig: request.AuthRequestConfig{
 			ClientID:     redirect.ClientID,
@@ -53,12 +57,16 @@ func RefreshToken(ctx context.Context, r *http.Request, w http.ResponseWriter, r
 
 // CodeToken get token and set the cookie/session.
 func CodeToken(ctx context.Context, r *http.Request, w http.ResponseWriter, code, cookieName string, redirect *Setting, sessionStore *sessions.FilesystemStore) error {
+	authClient := request.Auth{
+		Client: redirect.Client,
+	}
+
 	redirectURI, err := URI(r.Clone(ctx), redirect.Callback, redirect.BaseURL, redirect.Schema)
 	if err != nil {
 		return err
 	}
 
-	body, err := request.DefaultAuth.AuthorizationCode(ctx, request.AuthorizationCodeConfig{
+	body, err := authClient.AuthorizationCode(ctx, request.AuthorizationCodeConfig{
 		Code:        code,
 		RedirectURL: redirectURI,
 		AuthRequestConfig: request.AuthRequestConfig{

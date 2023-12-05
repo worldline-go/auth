@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/labstack/echo/v4 v4.11.3
-	github.com/rs/zerolog v1.30.0
+	github.com/rs/zerolog v1.31.0
 	golang.org/x/oauth2 v0.3.0
 )
 

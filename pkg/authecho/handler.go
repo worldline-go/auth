@@ -445,7 +445,7 @@ func MiddlewareJWTWithRedirection(opts ...Option) []echo.MiddlewareFunc {
 
 			// remove auth query params to prevent goes to authentication call
 			redirect.RemoveAuthQueryParams(c.Request())
-			redirectURI, errR := redirect.URI(c.Request().Clone(c.Request().Context()), options.redirect.Callback, options.redirect.BaseURL, options.redirect.Schema)
+			redirectURI, errR := redirect.URI(c.Request().Clone(c.Request().Context()), options.redirect.Callback, options.redirect.BaseURL, options.redirect.Schema, options.redirect.DisableRawQueryEmpty)
 			if errR != nil {
 				return echo.NewHTTPError(http.StatusFailedDependency, errR.Error())
 			}

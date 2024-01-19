@@ -61,7 +61,7 @@ func CodeToken(ctx context.Context, r *http.Request, w http.ResponseWriter, code
 		Client: redirect.Client,
 	}
 
-	redirectURI, err := URI(r.Clone(ctx), redirect.Callback, redirect.BaseURL, redirect.Schema)
+	redirectURI, err := URI(r.Clone(ctx), redirect.Callback, redirect.BaseURL, redirect.Schema, redirect.DisableRawQueryEmpty)
 	if err != nil {
 		return err
 	}

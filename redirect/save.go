@@ -75,17 +75,21 @@ func SetRedirect(r *http.Request, redirect *Setting, rValue RedirectValue) error
 		return fmt.Errorf("error parseQuery, %w", err)
 	}
 
-	q := r.URL.Query()
-	if queryParams.Has("code") {
-		q.Add("code", queryParams.Get("code"))
+	if redirect.CallbackSet {
+		r.URL.RawQuery = queryParams.Encode()
+	} else {
+		q := r.URL.Query()
+		if queryParams.Has("code") {
+			q.Add("code", queryParams.Get("code"))
+		}
+		if queryParams.Has("state") {
+			q.Add("state", queryParams.Get("state"))
+		}
+		if queryParams.Has("session_state") {
+			q.Add("session_state", queryParams.Get("session_state"))
+		}
+		r.URL.RawQuery = q.Encode()
 	}
-	if queryParams.Has("state") {
-		q.Add("state", queryParams.Get("state"))
-	}
-	if queryParams.Has("session_state") {
-		q.Add("session_state", queryParams.Get("session_state"))
-	}
-	r.URL.RawQuery = q.Encode()
 
 	// path
 	path := r.URL.Path

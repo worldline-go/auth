@@ -5,7 +5,7 @@ import (
 	"net/url"
 )
 
-func URI(r *http.Request, callback, baseURL, schema string) (string, error) {
+func URI(r *http.Request, callback, baseURL, schema string, disableRawQueryEmpty bool) (string, error) {
 	if baseURL == "" {
 		// check headers of X-Forwarded-Proto and X-Forwarded-Host
 		// if they are set, use them to build the redirect uri
@@ -40,6 +40,10 @@ func URI(r *http.Request, callback, baseURL, schema string) (string, error) {
 
 	if callback != "" {
 		r.URL.Path = callback
+	}
+
+	if !disableRawQueryEmpty {
+		r.URL.RawQuery = ""
 	}
 
 	return r.URL.String(), nil

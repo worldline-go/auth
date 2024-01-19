@@ -30,6 +30,8 @@ type Setting struct {
 	// HttpOnly for true for not accessible by JavaScript.
 	HttpOnly bool `cfg:"http_only"`
 
+	// DisableRawQueryEmpty for not making empty of the RawQuery before send code token grant.
+	DisableRawQueryEmpty bool `cfg:"disable_raw_query_empty"`
 	// Callback is the callback URI.
 	Callback string `cfg:"callback"`
 	// CallbackSet for setting back original path.
